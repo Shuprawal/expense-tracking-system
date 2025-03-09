@@ -116,10 +116,16 @@ class ForecastincomeController extends Controller
 
     public function report( Request $request)
     {
+
+        $expenses="";
 //        if($request->input('month')){
             $selectedMonth = $request->input('month', now()->month);
+//            $selectedMonth = $request->input('month', now()->month);
 //        }
-//        dd($selectedMonth);
+//        dd(Carbon::now()->addMonth(1)->month);
+
+
+
 
         $user = auth()->user();
         $income = Forecastincome::where('user_id',$user->id)->first();
@@ -130,13 +136,21 @@ class ForecastincomeController extends Controller
             $totalIncome = $income->amount;
         }
 
-        $categories = $user->categories()->
-            whereHas('users', function ($query) use ($selectedMonth) {
-                $query->whereMonth('date', $selectedMonth);
-        })
-            ->withPivot('percentage')->get();
-        
+        $categories = $user->categories()
+            ->whereHas('users', function ($query) use ($selectedMonth) {
+                $query->whereBetween('date', [
+                    now()->setMonth((int)$selectedMonth)->startOfMonth(),
+                    now()->setMonth((int)$selectedMonth)->endOfMonth()
+                ])
+                    ->where('users.id', auth()->id());
+            })
+            ->withPivot('percentage','date')
+            ->get()
+        ->unique('id');
+//        dd($categories->pluck('id'));
+
         $expenses = [];
+
 
         foreach ($categories as $category){
             $spended = Expense::where('user_id',$user->id)->where('category_id',$category->id)->whereMonth('date',$selectedMonth)->get();
@@ -148,15 +162,37 @@ class ForecastincomeController extends Controller
 
             }
 
+
+
             $percentage = $category->pivot->percentage;
             $amount = ($percentage / 100) * $totalIncome;
             $remaining = $amount - $totalExpense;
+            $spendPercentage = round( $totalExpense/$amount * 100,2) ;
+
+            $forecastPercentage = round( ($percentage + $spendPercentage)/2 *100 ,2) ;
+
+
+            if($selectedMonth = Carbon::now()->addMonth(1)->month) {
+                $percentage =
+
+                $expenses[] = [
+                    'name' => $category->name,
+                    'percentage' => $percentage,
+                    'amount' => $amount,
+                    'spend' => $totalExpense,
+                    'spendPercentage'=>$forecastPercentage,
+                    'remaining' => $remaining,
+
+                ];
+            }
+
 
             $expenses[] = [
                 'name' => $category->name,
                 'percentage' => $category->pivot->percentage,
                 'amount' => $amount,
                 'spend' => $totalExpense,
+                'spendPercentage'=>$spendPercentage,
                 'remaining' => $remaining,
 
             ];

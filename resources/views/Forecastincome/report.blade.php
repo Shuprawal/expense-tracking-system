@@ -21,7 +21,6 @@
                                 <input type="hidden" name="month" value="{{$i}}">
                                 <button class="dropdown-item " type="submit">{{$i}}</button>
                             </form>
-
                         </li>
                     @endfor
                 </ul>
@@ -37,6 +36,7 @@
                             <th scope="col">Category</th>
                             <th scope="col">Percentage</th>
                             <th scope="col">Amount to spend</th>
+                            <th scope="col">Spend percentage</th>
                             <th scope="col">Actual spend</th>
                             <th scope="col">Remaining</th>
                         </tr>
@@ -52,6 +52,9 @@
                                 </td>
                                 <td>
                                     {{$expense['amount']}}
+                                </td>
+                                <td>
+                                    {{$expense['spendPercentage']}}
                                 </td>
                                 <td>
                                     {{ $expense['spend']}}

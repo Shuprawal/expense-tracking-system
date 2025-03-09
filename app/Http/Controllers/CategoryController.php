@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CategoryRequest;
 use App\Http\Requests\ForecastPercentage;
 use App\Models\Category;
+use App\Models\Expense;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -68,11 +69,10 @@ class CategoryController extends Controller
                 ];
 
             }
-
-
-
+//            session(['selected_date' => $request->date]);
 
             auth()->user()->categories()->attach($attchData);
+
 
             DB::commit();
             return redirect()->route('forecast');
@@ -157,7 +157,7 @@ class CategoryController extends Controller
 
         }else{
             $categories = Category::with('users')
-                ->userOrAdmin()
+//                ->userOrAdmin()
                 ->get();
         }
 
@@ -173,17 +173,30 @@ class CategoryController extends Controller
         $repeatCategory=[];
         $categories = Category::with('users')
 
-            ->whereHas('users', function ($subQuery) {
+            ->whereHas('users', function ($query) {
 
-                    $subQuery->whereBetween('category_user.date',[Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+                    $query->whereBetween('category_user.date',[Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+//                    $query->whereDate('category_user.date',session('selected_date'))
                     ->where('users.id', auth()->id());
             })
             ->get();
 
+        $categoryIds = $categories->pluck('id');
+
+        $expense = Expense::where('user_id', auth()->id())
+            ->whereIn('category_id', $categoryIds)
+            ->whereBetween('created_at', [Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->subMonth()->endOfMonth()])
+            ->get();
+
+//        dd($expense);
+
+        $categoriesArray = $categories->pluck('percentage')->toArray();
+
+
         $cats = Category::with('users')
             ->whereHas('users', function ($query) {
 
-                $query->whereBetween('category_user.date',[Carbon::now()->subMonth(2)->startOfMonth(), Carbon::now()->endOfMonth()])
+                $query->whereBetween('category_user.date',[Carbon::now()->subMonth(1)->startOfMonth(), Carbon::now()->subMonth(1)->endOfMonth()])
                     ->where('users.id', auth()->id());
             })->get();
 
@@ -191,7 +204,7 @@ class CategoryController extends Controller
         $repeatCategory1 = [];
         $repeatCategory1 = $cats->where($categories->pluck('name') , $cats->pluck('name'));
         if ($repeatCategory1){
-            dd($repeatCategory1);
+//            dd($repeatCategory1);
         }
 
 
@@ -218,22 +231,18 @@ class CategoryController extends Controller
 
         return view('categories.forecast', compact('categories'));
 
+
     }
     public function forecastStore(ForecastPercentage $request)
     {
         $user = Auth::user();
-
         $data = [];
-
-
-
 
         foreach ($request->category as $index => $category) {
             $data[$category] = ['percentage' => $request->percentage[$index]];
         }
 
         $user->categories()->sync($data);
-
         return redirect()->route('forecasts.index');
 
     }

@@ -15,16 +15,25 @@ class ExpenseController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
 //        $budget = Budget::where('user_id', auth()->id())->first();
 //        if ($budget) {
+        $selectedMonth = $request->input( 'month',now()->month);
             $categories = Category::with('users')
-                ->whereHas('users', function ($query) {
-                    $query->where('users.id', auth()->id());
+                ->whereHas('users', function ($query) use ($selectedMonth) {
+
+                    $query->where('users.id', auth()->id())
+                    ->whereBetween('date', [
+                        now()->setMonth((int)$selectedMonth)->startOfMonth(),
+                        now()->setMonth((int)$selectedMonth)->endOfMonth()
+                    ]);
                 })
                 ->get();
-            $expenses = Expense::where('user_id',auth()->id())->with(['users','category'])->get();
+            $expenses = Expense::where('user_id',auth()->id())->with(['users','category']) ->whereBetween('date', [
+                now()->setMonth((int)$selectedMonth)->startOfMonth(),
+                now()->setMonth((int)$selectedMonth)->endOfMonth()
+            ])->get();
             return view('expenses.index', compact('expenses','categories'));
 //        }
 //        else{

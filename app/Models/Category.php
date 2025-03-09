@@ -12,7 +12,7 @@ class Category extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class)->withPivot('percentage','date');
+        return $this->belongsToMany(User::class)->withPivot('percentage','date')->distinct();
     }
 
     public function expenses()
