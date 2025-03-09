@@ -22,9 +22,19 @@ class CategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'array|max:255',
-            'name.*' => 'string',
+            'selected_categories' => 'array',
+            'selected_categories.*' => 'string|exists:categories,name',
+            'new_categories' => 'array',
+            'new_categories.*' => 'string|unique:categories,name',
             'date' =>'date|required'
         ];
+
+//        return [
+//            'selected_categories'   => 'array',
+//            'selected_categories.*' => 'string|exists:categories,name',
+//            'new_categories'        => 'array',
+//            'new_categories.*'      => 'string|unique:categories,name|min:2',
+//            'date'                  => 'required|date',
+//        ];
     }
 }

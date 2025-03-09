@@ -21,7 +21,6 @@
                                 <input type="hidden" name="month" value="{{$i}}">
                                 <button class="dropdown-item " type="submit">{{$i}}</button>
                             </form>
-
                         </li>
                     @endfor
                 </ul>
@@ -32,11 +31,20 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
+{{--                        @if($selectedMonth == Carbon::now()->addMonth(1)->month) {--}}
+{{--                        <th scope="col">Category</th>--}}
+{{--                        <th scope="col">Forecast Percentage</th>--}}
+{{--                        <th scope="col">Amount to spend</th>--}}
+{{--                        <th scope="col">Spend percentage</th>--}}
+{{--                        <th scope="col">Actual spend</th>--}}
+{{--                        <th scope="col">Remaining</th>--}}
+{{--                        @endif--}}
                         <thead class="table-light">
                         <tr>
                             <th scope="col">Category</th>
                             <th scope="col">Percentage</th>
                             <th scope="col">Amount to spend</th>
+                            <th scope="col">Spend percentage</th>
                             <th scope="col">Actual spend</th>
                             <th scope="col">Remaining</th>
                         </tr>
@@ -47,11 +55,14 @@
                             <tr>
                                 <td>{{$expense['name']}}</td>
                                 <td>{{$expense['percentage']}}%
-                                    <a href="{{route('forecasts.edit',$income->id)}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>
+{{--                                    <a href="{{route('forecasts.edit',$income->id)}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>--}}
 
                                 </td>
                                 <td>
                                     {{$expense['amount']}}
+                                </td>
+                                <td>
+                                    {{$expense['spendPercentage']}}
                                 </td>
                                 <td>
                                     {{ $expense['spend']}}

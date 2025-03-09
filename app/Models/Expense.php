@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Statementable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
+    use HasFactory, Statementable;
     protected $fillable = ['user_id', 'amount', 'description', 'category_id','date'];
 
     public function users()
@@ -15,5 +18,9 @@ class Expense extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+    public function statements()
+    {
+        return $this->morphMany(Statement::class, 'statementable');
     }
 }

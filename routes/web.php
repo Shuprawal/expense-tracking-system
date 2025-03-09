@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BudgetController;
@@ -30,9 +31,12 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('categories/define/category', [CategoryController::class, 'newCreate'])->name('new-categories');
+Route::get('admin/categories', [CategoryController::class, 'adminIndex'])->name('admin_categories');
 Route::get('categories/define/forecast', [CategoryController::class, 'forecast'])->name('forecast');
 Route::post('categories/define/forecast', [CategoryController::class, 'forecastStore'])->name('forecast.percentage');
 
 
+Route::get('admin/dashboard',[UserController::class, 'dashboard'])->name('admin.dashboard');
+Route::resource('users',UserController::class);
 
 require __DIR__.'/auth.php';

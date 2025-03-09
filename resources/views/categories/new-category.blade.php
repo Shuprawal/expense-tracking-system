@@ -5,52 +5,49 @@
             @csrf
             <div class="mb-3">
                 <label class="form-label">Choose Categories</label>
-                <div class="d-flex flex-wrap gap-2">
+                <div class="d-flex flex-wrap gap-3">
                     @foreach ($categories as $category)
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="name[]" value="{{ $category->name }}" id="category_{{ $category->id }}">
-                            <label class="form-check-label" for="category_{{ $category->id }}" >
+                            <input class="form-check-input" type="checkbox" name="selected_categories[]" value="{{ $category->name }}" id="category_{{ $category->id }}">
+                            <label class="form-check-label" for="category_{{ $category->id }}">
                                 {{ $category->name }}
                             </label>
-                            <x-input-error :messages="$errors->get('name[]')" class="mt-2" />
-
                         </div>
                     @endforeach
                 </div>
+                <x-input-error :messages="$errors->get('selected_categories')" class="mt-2" />
             </div>
+
             <div class="mb-3">
-                <label for="date" class="form-label">
-                    Date
-                </label>
-                <input type="date" class="form-control" id="date" name="date">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" class="form-control" id="date" name="date" required>
                 <x-input-error :messages="$errors->get('date')" class="mt-2" />
             </div>
 
             <div class="mb-3">
-                <label for="name" class="form-label">Category Name</label>
-                <div>
-                    <input type="text" class="form-control" id="name" name="name[]" placeholder="Enter Category Name">
-                    <div class="">
-                        <button type="button" class="btn btn-danger btn-sm" onclick="addCategory()">Add Category</button>
-                    </div>
-                    <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                <label for="new_category" class="form-label">Add New Category</label>
+                <div id="new-category-container">
+                    <input type="text" class="form-control" name="new_categories[]" placeholder="Enter Category Name">
                 </div>
+                <button type="button" class="btn btn-success btn-sm mt-2" onclick="addCategory()">+ Add Another</button>
+                <x-input-error :messages="$errors->get('new_categories')" class="mt-2" />
             </div>
+
             <div class="text-center">
                 <button type="submit" class="btn btn-primary">Submit</button>
             </div>
         </form>
     </div>
+
     <script>
         function addCategory() {
+            var container = document.getElementById('new-category-container');
             var input = document.createElement('input');
             input.type = 'text';
-            input.name = 'name[]';
-            input.className = 'form-control';
+            input.name = 'new_categories[]';
+            input.className = 'form-control mt-2';
             input.placeholder = 'Enter Category Name';
-            document.querySelector('.d-flex.flex-wrap.gap-2').appendChild(input);
+            container.appendChild(input);
         }
     </script>
 </x-app-layout>
-
-
