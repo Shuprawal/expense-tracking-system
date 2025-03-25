@@ -23,5 +23,15 @@ class AdminSeeder extends Seeder
             'role' => 'admin'
 
         ]);
+        user::create([
+            'first_name' => 'Ram',
+            'last_name' => 'Ram',
+            'username' => 'ram',
+            'email' => 'ram@gmail.com',
+            'password' => bcrypt('ram12345'),
+            'role' => 'user'
+
+        ]);
+
     }
 }

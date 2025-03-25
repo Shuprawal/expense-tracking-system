@@ -14,7 +14,6 @@ class Budget extends Model
     }
 
 
-
     public function increaseBudget($incomeAmount){
          $this->amount+= $incomeAmount;
          $this->save();

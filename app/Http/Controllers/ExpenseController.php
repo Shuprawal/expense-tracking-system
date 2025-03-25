@@ -17,28 +17,32 @@ class ExpenseController extends Controller
      */
     public function index(Request $request)
     {
-//        $budget = Budget::where('user_id', auth()->id())->first();
-//        if ($budget) {
-        $selectedMonth = $request->input( 'month',now()->month);
-            $categories = Category::with('users')
-                ->whereHas('users', function ($query) use ($selectedMonth) {
 
-                    $query->where('users.id', auth()->id())
-                    ->whereBetween('date', [
-                        now()->setMonth((int)$selectedMonth)->startOfMonth(),
-                        now()->setMonth((int)$selectedMonth)->endOfMonth()
-                    ]);
-                })
-                ->get();
-            $expenses = Expense::where('user_id',auth()->id())->with(['users','category']) ->whereBetween('date', [
+        $selectedMonth = $request->input( 'month',now()->month);
+
+
+//        $expenses = Expense::with('category' )->where('user_id', auth()->id())
+//                ->whereBetween('date', [
+//                    now()->setMonth((int)$selectedMonth)->startOfMonth(),
+//                    now()->setMonth((int)$selectedMonth)->endOfMonth()
+//                ])
+//
+//    ->get();
+
+        $categories = Category::with(['expenses' => function ($query) use ($selectedMonth) {
+            $query->where('user_id', auth()->id())
+            ->whereBetween('date', [
                 now()->setMonth((int)$selectedMonth)->startOfMonth(),
                 now()->setMonth((int)$selectedMonth)->endOfMonth()
-            ])->get();
-            return view('expenses.index', compact('expenses','categories'));
-//        }
-//        else{
-//            return redirect()->route('budgets.create');
-//        }
+            ]);
+        }])
+            ->whereHas('users', function ($query) {
+                $query->where('users.id', auth()->id());
+            })
+            ->get();
+
+
+            return view('expenses.index', compact('categories'));
 
     }
 

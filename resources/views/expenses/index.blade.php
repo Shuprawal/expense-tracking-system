@@ -32,7 +32,7 @@
                                 </ul>
                             </div>
 
-                            <!-- Month Filter -->
+
                             <div class="relative">
                                 <button class="inline-flex items-center px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-600 active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <span>Choose Month</span>
@@ -47,7 +47,7 @@
                                     @for($i=1; $i<=12; $i++)
                                         <li>
                                             <form action="{{route('expenses.index',$i)}}" method="get">
-                                                @csrf
+
                                                 <input type="hidden" name="month" value="{{$i}}">
                                                 <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600" type="submit">
                                                     {{ $months[$i-1] }}
@@ -67,45 +67,41 @@
                         </form>
                     </div>
 
-                    <!-- Expenses List -->
+
                     <div class="mt-6 space-y-4">
-                        @forelse ($expenses as $expense)
-                            <div class="bg-gray-50 dark:bg-gray-700 overflow-hidden border border-gray-200 dark:border-gray-600 rounded-lg shadow-sm hover:shadow transition-shadow duration-200">
-                                <div class="px-4 py-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                                    <div class="flex items-center">
-                                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $expense->category->name }}</h3>
+
+                        <div class="mt-6 space-y-6">
+                            @forelse ($categories as $category)
+                                <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-sm">
+                                    <div class="px-4 py-3 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $category->name }}</h3>
                                     </div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 sm:mt-0">
-                                        <span class="inline-flex items-center">
-                                            {{ $expense->date }}
-                                        </span>
-                                    </p>
-                                </div>
-                                <div class="px-4 py-4 sm:px-6">
-                                    <div class="flex items-center justify-between">
-                                        <p class="text-xl font-bold text-gray-800 dark:text-gray-200">
-                                            Rs {{ number_format($expense->amount, 2) }}
-                                        </p>
-                                        <div class="flex space-x-2">
-                                            <a href="{{ route('expenses.edit', $expense->id) }}" class="inline-flex items-center px-3 py-1 text-xs font-medium ">
 
-                                                Edit
-                                            </a>
-                                            <form action="{{ route('expenses.destroy', $expense->id) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="inline-flex items-center px-3 py-1 text-xs " onclick="return confirm('Are you sure you want to delete this expense?')">
-
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        </div>
+                                    <div class="px-4 py-4 sm:px-6 space-y-3">
+                                        @forelse ($category->expenses as $expense)
+                                            <div class="flex items-center justify-between bg-white dark:bg-gray-900 p-3 rounded-md shadow-sm">
+                                                <p class="text-xl font-bold text-gray-800 dark:text-gray-200">
+                                                    Rs {{ number_format($expense->amount, 2) }}
+                                                </p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ $expense->date }}</p>
+                                                <div class="flex space-x-2">
+                                                    <a href="{{ route('expenses.edit', $expense->id) }}" class="text-blue-500 hover:underline">Edit</a>
+                                                    <form action="{{ route('expenses.destroy', $expense->id) }}" method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-500 hover:underline" onclick="return confirm('Are you sure you want to delete this expense?')">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <p class="text-gray-500 dark:text-gray-400">No expenses in this category.</p>
+                                        @endforelse
                                     </div>
                                 </div>
-                            </div>
-                        @empty
-
-                        @endforelse
+                            @empty
+                                <p class="text-gray-500 dark:text-gray-400 text-center">No expenses found.</p>
+                            @endforelse
+                        </div>
                     </div>
 
 

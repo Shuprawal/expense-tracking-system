@@ -1,18 +1,5 @@
 <x-app-layout>
 
-{{--@foreach($users as $user)--}}
-{{--    <h3>{{$user->username}}</h3>--}}
-{{--        @if($user->categories->isNotEmpty())--}}
-{{--            @foreach($user->categories as $category)--}}
-{{--                <li>--}}
-{{--                    {{ $category->name }}--}}
-{{--                    ({{ $category->pivot->percentage }}%, {{ $category->pivot->date }})--}}
-{{--                </li>--}}
-{{--            @endforeach--}}
-{{--        @endif--}}
-
-
-{{--@endforeach--}}
 
     <div class="container m-4 p-4">
         <div class="card">

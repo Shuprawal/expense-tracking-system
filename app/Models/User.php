@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'role',
         'email',
         'password',
+        'role_id',
     ];
 
     /**
@@ -70,8 +72,28 @@ class User extends Authenticatable
         return $this->budgets()->sum('amount');
     }
 
+
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function permissions()
+    {
+        return$this->roles()->with('permissions');
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return $this->roles()->whereHas('permissions', function ($query) use ($permission) {
+            $query->where('name', $permission);
+        })->exists();
+    }
     public function isAdmin()
     {
-        return $this->role === 'admin';
+        return $this->roles->contains('name', 'admin');
     }
+
+
 }

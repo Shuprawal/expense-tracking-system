@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Forecastincome;
 use App\Models\Income;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
+use App\UserRole;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+
 
 class UserController extends Controller
 {
@@ -28,6 +34,13 @@ class UserController extends Controller
 
     public function dashboard()
     {
+
+//        $routes = collect(Route::getRoutes())->map(function ($route) {
+//            return $route->getName();
+//        })->filter()->toArray();
+//
+//        dd($routes);
+
         $userNumber = User::where('role','user')->count();
         $categoryNumber = Category::count();
         $averageIncome = Forecastincome::avg('amount') ?? 0;
@@ -82,4 +95,35 @@ class UserController extends Controller
     {
         //
     }
+    public function permission()
+    {
+        $permissions = Permission::get()->groupBy('group');
+
+        $roles= Role::all();
+
+        return view('admin.permissions', compact('permissions', 'roles'));
+    }
+    public function addPermission($roleId, $permissionId)
+    {
+        $permission = Permission::findOrFail($permissionId);
+        $role = Role::findOrFail($roleId);
+
+        if (!$role->permissions()->where('name', $permission->name)->exists()) {
+            $role->permissions()->attach($permission);
+        }
+
+        return redirect()->back();
+    }
+
+    public function removePermission($roleId, $permissionId)
+    {
+        $role = Role::findOrFail($roleId);
+        $permission = Permission::findOrFail($permissionId);
+
+        $role->permissions()->detach($permission->id);
+
+        return redirect()->back()->with('success', 'Permission removed successfully');
+    }
+
+
 }
