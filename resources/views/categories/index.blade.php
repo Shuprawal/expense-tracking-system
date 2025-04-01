@@ -1,35 +1,31 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-100 leading-tight">
-            {{ __('Categories') }}
-        </h2>
-    </x-slot>
+    <div class="container mt-5 p-4 border rounded shadow bg-white" style="max-width: 800px;">
+        <h2 class="mb-4 text-center">Categories</h2>
 
+        <table class="table table-bordered">
+            <thead class="table-dark">
+            <tr>
 
+                <th>Category Name</th>
+                <th>Created By</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach ($categories as $category)
+                <tr>
 
-    <h2>{{ Auth()->user()->email }}</h2>
-    <div class="m-4 p-4 card shadow-sm" style="background-color: white;">
-        <h3 class="">Income Categories: </h3>
-        @forelse ($categories as $category)
+                    <td>{{ $category->name }}</td>
+                    <td>{{ $category->user->username}}</td>
+                    <td><form action="{{route('categories.destroy',$category->id)}}" method="POST">
+                            @csrf
+                            @method('delete')
+                            <button class="btn btn-danger" type="submit">Delete</button>
+                        </form></td>
 
-            <h3 class="">{{ $category->name }}</h3>
-
-
-            @empty
-            <h2>No categories</h2>
-
-        @endforelse
-
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
     </div>
-
-
-            <x-nav-link class="" href="{{ route('categories.create') }}">
-                {{ __('Create Categories') }}
-            </x-nav-link>
-
-
-
-
-
-
 </x-app-layout>

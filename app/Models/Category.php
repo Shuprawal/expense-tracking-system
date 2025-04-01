@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Category extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['name', 'type'];
+    protected $fillable = ['name', 'user_id'];
 
 
 
@@ -22,5 +22,9 @@ class Category extends Model
         return $this->hasMany(Expense::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
 }

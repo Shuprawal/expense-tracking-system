@@ -3,8 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use MongoDB\BSON\Regex;
 
-class IncomeRequest extends FormRequest
+class RoleRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,10 +23,16 @@ class IncomeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => 'required|numeric|min:1',
-            'category_id' => 'required|exists:categories,id',
-            'description' => 'required|string',
-            'date' => 'required|date'
+            'name' => ['required','string','unique:roles,name',
+                'regex:/[a-zA-Z]+$/'
+            ],
+
+        ];
+    }
+    public function messages(): array
+    {
+        return [
+            'name.regex'=>'The role name must be only alphabets'
         ];
     }
 }

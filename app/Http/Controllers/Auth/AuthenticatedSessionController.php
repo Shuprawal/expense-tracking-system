@@ -20,25 +20,33 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
+
+
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
 
         $user = Auth::user();
 
-       if($user->isAdmin() == 'admin'){
-           return redirect()->intended(route('admin.dashboard', absolute: false) );
-       }else{
-           return redirect()->intended(route('dashboard', absolute: false));
-       }
 
-//        return redirect()->intended(route('dashboard', absolute: false));
+
+
+        if (!$user->roles()->exists()) {
+            Auth::logout();
+            session()->invalidate();
+            session()->regenerateToken();
+            return redirect()->route('login')->with('error', 'You are not assigned to any role. Contact admin.');
+        }
+
+
+        if ($user->isAdmin()) {
+            return redirect()->intended(route('admin.dashboard', [], false));
+        } else {
+            return redirect()->intended(route('dashboard', [], false));
+        }
     }
+
 
     /**
      * Destroy an authenticated session.
@@ -53,4 +61,6 @@ class AuthenticatedSessionController extends Controller
 
         return redirect('/');
     }
+
+
 }

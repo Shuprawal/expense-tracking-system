@@ -23,6 +23,19 @@
             </div>
 
             <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
+
+                @if (session('error'))
+                    <div class="alert alert-danger" style="color: #ff4a4a;">
+                        {{ session('error') }}
+                    </div>
+                @endif
+
+
+                @if (session('success'))
+                    <div class="alert alert-success">
+                        {{ session('success') }}
+                    </div>
+                    @endif
                 {{ $slot }}
             </div>
         </div>

@@ -3,10 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\UserRole;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 
 class User extends Authenticatable
 {
@@ -72,8 +73,6 @@ class User extends Authenticatable
         return $this->budgets()->sum('amount');
     }
 
-
-
     public function roles()
     {
         return $this->belongsToMany(Role::class);
@@ -95,5 +94,18 @@ class User extends Authenticatable
         return $this->roles->contains('name', 'admin');
     }
 
+    public function scopeIsNotAdmin($query)
+    {
+     $query->whereHas('roles', function ($query) {
+         $query->where('name','!=', 'admin');
+     });
+    }
+
+    public function getRole(): ?Role
+    {
+
+
+        return $this->roles()->first();
+    }
 
 }

@@ -20,7 +20,7 @@ class AdminSeeder extends Seeder
             'username' => 'admin',
             'email' => 'admin@gmail.com',
             'password' => bcrypt('admin1234'),
-            'role' => 'admin'
+
 
         ]);
         user::create([
@@ -29,7 +29,7 @@ class AdminSeeder extends Seeder
             'username' => 'ram',
             'email' => 'ram@gmail.com',
             'password' => bcrypt('ram12345'),
-            'role' => 'user'
+
 
         ]);
 

@@ -12,21 +12,12 @@
 
         </div>
 
-{{--        <div class="mb-3">--}}
-{{--            <label for="type" class="form-label">Category Type</label>--}}
-{{--            <select class="form-select @error('type') is-invalid @enderror" aria-label="Default select example" name="type">--}}
-{{--                    <option value="income">Income</option>--}}
-{{--                    <option value="expense">Expense</option>--}}
-{{--            </select>--}}
-{{--            @error('category_id')--}}
-{{--            <p class="invalid-feedback">{{$message}}</p>--}}
-{{--            @enderror--}}
-{{--        </div>--}}
+
 
         <x-primary-button>
             {{ __('Create') }}
         </x-primary-button>
-{{--        <button type="submit" class="btn btn-primary">Submit</button>--}}
+
     </form>
 
 </x-app-layout>

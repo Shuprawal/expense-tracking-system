@@ -17,32 +17,24 @@ class ExpenseController extends Controller
      */
     public function index(Request $request)
     {
-
+        $user = auth()->user();
         $selectedMonth = $request->input( 'month',now()->month);
 
+        $expenses = Expense::where('user_id',$user->id)->whereMonth('date',((int)$selectedMonth))
+            ->whereHas('category', function ($query) use ($user, $selectedMonth) {
+                $query->whereHas('users', function ($subQuery) use ($user, $selectedMonth) {
+                    $subQuery->where('category_user.user_id', $user->id)
+                        ->whereMonth('date', (int)$selectedMonth);
+                });
+            })->distinct()->paginate(3);
 
-//        $expenses = Expense::with('category' )->where('user_id', auth()->id())
-//                ->whereBetween('date', [
-//                    now()->setMonth((int)$selectedMonth)->startOfMonth(),
-//                    now()->setMonth((int)$selectedMonth)->endOfMonth()
-//                ])
-//
-//    ->get();
+        $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
+            $query->whereMonth('date', $selectedMonth)
+                ->where('user_id', $user->id);
 
-        $categories = Category::with(['expenses' => function ($query) use ($selectedMonth) {
-            $query->where('user_id', auth()->id())
-            ->whereBetween('date', [
-                now()->setMonth((int)$selectedMonth)->startOfMonth(),
-                now()->setMonth((int)$selectedMonth)->endOfMonth()
-            ]);
-        }])
-            ->whereHas('users', function ($query) {
-                $query->where('users.id', auth()->id());
-            })
-            ->get();
+        })->withTrashed()->distinct()->get();
 
-
-            return view('expenses.index', compact('categories'));
+        return view('expenses.index', compact('categories','expenses', 'selectedMonth'));
 
     }
 
@@ -53,9 +45,9 @@ class ExpenseController extends Controller
     {
         $categories = Category::with('users')
             ->whereHas('users', function ($query) {
-                $query->where('users.id', auth()->id());
+                $query->where('users.id', auth()->id())
+                ->whereMonth('date', now()->month);
             })
-
             ->get();
         return view('expenses.create',compact('categories'));
     }
@@ -68,7 +60,6 @@ class ExpenseController extends Controller
 
         try {
             DB::beginTransaction();
-
            $expense = Expense::create([
                 'amount'=>$request->amount,
                 'description'=> $request->description,
@@ -81,30 +72,13 @@ class ExpenseController extends Controller
                'amount'=>$request->amount
            ]);
 
-            $budget = Budget::where('user_id', auth()->id())->first();
-            if ($budget) {
-//                dd($budget->limit, $budget->amount , $request->amount);
-//
-//                if($budget->limit < $budget->amount - $request->amount){
-//
-//                    return back()->withErrors(['amount'=> 'You have exceeded your limit']);
-//                }else{
-//                    if (($budget->amount - $request->amount)<0){
-//
-//                        return back()->withErrors(['amount'=> 'You have exceeded your budget']);
-//                    } else{
-                        $budget->decreaseBudget($request->amount);
-//                    }
 
-//                }
-//
-            }
             DB::commit();
             return redirect()->route('expenses.index');
 
         }catch (\Exception $e) {
             DB::rollBack();
-            dd($e);
+           return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
 
     }

@@ -4,15 +4,18 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
+
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
-use MongoDB\BSON\Regex;
+
 
 class RegisteredUserController extends Controller
 {
@@ -42,23 +45,36 @@ class RegisteredUserController extends Controller
             }
             $newName = $originalName.$count;
 
-            return back()->withErrors(['username'=>'username already taken try '.$newName]);
+            return back()->withInput()->withErrors(['username'=>'username already taken try '.$newName]);
         }
 
 
-        $user = User::create([
-            'first_name'=> $request->first_name,
-            'last_name'=> $request->last_name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'role' => 'user',
-            'password' => Hash::make($request->password),
-        ]);
+        try {
 
-        event(new Registered($user));
+            DB::beginTransaction();
+            $user = User::create([
+                'first_name'=> $request->first_name,
+                'last_name'=> $request->last_name,
+                'username' => $request->username,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+            $defaultRole = Role::where('name','user')->first();
+            $user->roles()->sync([$defaultRole->id]);
 
-        Auth::login($user);
+            event(new Registered($user));
 
-        return redirect()->route('new-categories');
+            Auth::login($user);
+
+            DB::commit();
+
+            return redirect()->route('new-categories');
+
+
+        }catch (\Exception $exception){
+            DB::rollBack();
+            return back()->withInput()->with('error',$exception->getMessage());
+        }
+
     }
 }

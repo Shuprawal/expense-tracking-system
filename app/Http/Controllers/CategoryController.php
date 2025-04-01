@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CategoryRequest;
 use App\Http\Requests\ForecastPercentage;
+use App\Http\Requests\StoreFormRequest;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\User;
@@ -11,7 +12,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use MongoDB\Driver\Session;
 
 class CategoryController extends Controller
 {
@@ -20,15 +20,11 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::all();
-        return view('categories.index', compact( 'categories'));
+        $categories = Category::with('users')->get();
+        return view('categories.index', compact('categories'));
     }
 
-    public function adminIndex()
-    {
-        $categories = Category::with('users')->get();
-        return view('admin.category', compact('categories'));
-    }
+//
     /**
      * Show the form for creating a new resource.
      */
@@ -37,48 +33,47 @@ class CategoryController extends Controller
         return view('categories.create');
     }
 
+
+
+
     public function store(CategoryRequest $request)
     {
-
         try {
             DB::beginTransaction();
             $categoryIDs = [];
-            if (!empty($request->selected_categories)) {
-                foreach ($request->selected_categories as $categoryName) {
-                    $category = Category::where('name', $categoryName)->first();
-                    if ($category) {
-                        $categoryIDs[] = $category->id;
-                    }
-                }
+
+            if (!empty($request->categories)) {
+                $categoryIDs = Category::whereIn('name', $request->categories)->pluck('id')->toArray();
             }
+
 
             if (!empty($request->new_categories)) {
                 foreach ($request->new_categories as $categoryName) {
-                    $category = Category::firstOrCreate(['name' => $categoryName]);
+                    $category = Category::withTrashed()->where('name', $categoryName)->first();
+
+                    if ($category) {
+                        $category->restore();
+                    } else {
+
+
+                        $category = Category::create([
+                            'name' => $categoryName,
+                            'user_id' => auth()->id()]);
+
+                    }
+
                     $categoryIDs[] = $category->id;
                 }
             }
 
-            if (empty($categoryIDs)) {
-                return back()->withErrors(['category' => 'Please select or add at least one category.'])->withInput();
+
+            if (!empty($categoryIDs)) {
+                auth()->user()->categories()->attach($categoryIDs, ['date' => $request->date]);
+                session(['categoryDate' => $request->date]);
             }
 
-
-            $attachData = [];
-            foreach ($categoryIDs as $categoryID) {
-                $attachData[] = [
-                    'category_id' => $categoryID,
-                    'user_id' => auth()->id(),
-                    'date' => $request->date,
-                ];
-            }
-
-            auth()->user()->categories()->attach($attachData);
-
-            session(['categoryDate' => $request->date]);
             DB::commit();
             return redirect()->route('forecast')->with('success', 'Categories added successfully.');
-
         } catch (\Throwable $th) {
             DB::rollBack();
             return back()->with('error', $th->getMessage());
@@ -86,36 +81,26 @@ class CategoryController extends Controller
     }
 
 
-
     /**
      * Display the specified resource.
      */
-    public function show(Category $category)
+    public function show(Request $request, Category $category)
     {
+        $selectedDate =$request->input('month',now()->month);
+//
+//        $users = User::wherehas('categories', function ($query) use ($category) {
+//            $query->where('category_user.category_id', $category->id);
+//        }
+//        )->get();
+//        $userCount = $users->count();
+//        return view('admin.userCategory', compact('category', 'users', 'userCount'));
 
-        $users = User::wherehas('categories', function ($query) use ($category) {
-            $query->where('category_user.category_id', $category->id);
-        }
-        )->get();
-        $userCount = $users->count();
-        return view('admin.userCategory', compact('category', 'users', 'userCount'));
+        $expenses =Expense::where('category_id',$category->id)
+            ->where('user_id', auth()->id())->whereMonth('date',$selectedDate)->get();
+
+        return view('categories.show', compact('category','expenses','selectedDate'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Category $category)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Category $category)
-    {
-        //
-    }
 
     /**
      * Remove the specified resource from storage.
@@ -126,11 +111,23 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'Category deleted successfully.');
     }
 
+
     public function newCreate()
     {
+        $check = Category::whereHas('users', function ($query) {
+            $query->where('user_id', Auth::id());
+        })->count();
 
-        $categories = Category::with('users')
-            ->get();
+        if ($check == 0) {
+            $categories = Category::with('users')
+                ->get();
+        }else{
+            $categories = Category::whereDoesntHave('users', function ($query) {
+                $query->whereYear('category_user.date', carbon::now()->year)
+                    ->whereMonth('category_user.date', carbon::now()->month)
+                    ->where('category_user.user_id', Auth::id());
+            })->get();
+        }
         return view('categories.new-category', compact('categories'));
     }
 
@@ -149,7 +146,7 @@ class CategoryController extends Controller
 
 
     }
-    public function forecastStore(ForecastPercentage $request)
+    public function forecastStore(StoreFormRequest $request)
     {
         $user = Auth::user();
         $data = [];
@@ -157,15 +154,18 @@ class CategoryController extends Controller
         foreach ($request->category as $index => $category) {
             $data[$category] = ['percentage' => $request->percentage[$index]];
         }
-
         $user->categories()->wherePivot('date', session('categoryDate'))->syncWithoutDetaching($data);
-
         return redirect()->route('forecasts.index');
-
     }
 
+    public function forecastDetach(Request $request)
+    {
 
-
-
+        $user = Auth::user();
+        $user->categories()->whereMonth('date', carbon::now()->month)
+            ->whereYear('date',carbon::now()->year)
+            ->detach($request->category_id);
+        return redirect()->back();
+    }
 
 }

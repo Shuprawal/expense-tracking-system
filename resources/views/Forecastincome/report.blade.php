@@ -1,44 +1,20 @@
 <x-app-layout>
     <div class="container m-4 p-4">
-        <h1 class="fw-bold">Forecast Expenses {{ $selectedMonth }}</h1>
+        <h1 class="fw-bold">Forecast Expenses for {{\Carbon\Carbon::create()->month((int)$selectedMonth)->format('F')}}</h1>
         <h4>Forecast Income:{{$totalIncome , 2}}</h4>
 
         <div class="">
-            <a href="{{route('forecasts.edit',$income)}}" class="btn btn-primary">Add Expense</a>
+            <a href="{{route('forecasts.edit',$income)}}" class="btn btn-primary">Change Income</a>
         </div>
 
-        <div class="mt-4">
-            <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Choose Month
-                </button>
-                <ul class="dropdown-menu dropdown-menu-dark">
-                    @for($i=1; $i<=12; $i++)
-                        <li>
-                            <form action="{{route('forecasts.report',$i)}}" method="get">
-                                @csrf
 
-                                <input type="hidden" name="month" value="{{$i}}">
-                                <button class="dropdown-item " type="submit">{{$i}}</button>
-                            </form>
-                        </li>
-                    @endfor
-                </ul>
-            </div>
-        </div>
+        <x-month-select :route="'forecasts.report'" :parameters="[]" />
 
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
-{{--                        @if($selectedMonth == Carbon::now()->addMonth(1)->month) {--}}
-{{--                        <th scope="col">Category</th>--}}
-{{--                        <th scope="col">Forecast Percentage</th>--}}
-{{--                        <th scope="col">Amount to spend</th>--}}
-{{--                        <th scope="col">Spend percentage</th>--}}
-{{--                        <th scope="col">Actual spend</th>--}}
-{{--                        <th scope="col">Remaining</th>--}}
-{{--                        @endif--}}
+
                         <thead class="table-light">
                         <tr>
                             <th scope="col">Category</th>
@@ -47,12 +23,13 @@
                             <th scope="col">Spend percentage</th>
                             <th scope="col">Actual spend</th>
                             <th scope="col">Remaining</th>
+                            <th scope="col">Action</th>
                         </tr>
                         </thead>
                         <tbody>
 
                         @foreach($expenses as $expense)
-                            <tr>
+                            <tr >
                                 <td>{{$expense['name']}}</td>
                                 <td>{{$expense['percentage']}}%
 {{--                                    <a href="{{route('forecasts.edit',$income->id)}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>--}}
@@ -69,6 +46,16 @@
                                 </td>
                                 <td>
                                     {{ $expense['remaining']}}
+                                </td>
+                                <td>
+
+
+                                    <form action="{{route('forecasts.detach')}}" method="Post" >
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="category_id" value="{{$expense['category_id']}}">
+                                        <button type="submit">Delete</button>
+                                    </form>
                                 </td>
 
 

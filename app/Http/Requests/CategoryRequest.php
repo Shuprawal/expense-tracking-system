@@ -19,22 +19,33 @@ class CategoryRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
+
+
     public function rules(): array
     {
         return [
-            'selected_categories' => 'array',
-            'selected_categories.*' => 'string|exists:categories,name',
-            'new_categories' => 'array',
-            'new_categories.*' => 'string|unique:categories,name',
-            'date' =>'date|required'
-        ];
+            // Existing category checkboxes (optional, but required if no new category is provided)
+            'categories' => 'nullable|array',
+            'categories.*' => 'string|exists:categories,name',
 
-//        return [
-//            'selected_categories'   => 'array',
-//            'selected_categories.*' => 'string|exists:categories,name',
-//            'new_categories'        => 'array',
-//            'new_categories.*'      => 'string|unique:categories,name|min:2',
-//            'date'                  => 'required|date',
-//        ];
+            // New category input (optional, but required if no existing category is selected)
+            'new_categories' => 'nullable|array',
+            'new_categories.*' => 'string|distinct|required_without:categories|min:1',
+
+            // Date validation
+            'date' => ['required', 'date'],
+        ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'categories.*.exists' => 'The selected category does not exist.',
+            'new_categories.*.distinct' => 'Duplicate new categories are not allowed.',
+            'new_categories.*.required_without' => 'If no category is selected, you must enter at least one new category.',
+        ];
+    }
+
+
+
 }

@@ -7,12 +7,13 @@
             @foreach ($categories as $category)
                 <div>
                     <input type="hidden" name="category[]" value="{{$category->id}}">
-                    <input type="number" name="percentage[]" class="m-2 p-2">
+                    <input type="number" name="percentage[]" value="{{ old('percentage.' . $loop->index) }}" class="m-2 p-2">
                     {{$category->name}}
                     <x-input-error :messages="$errors->get('percentage.' .$loop->index)" class="mt-2" />
                 </div>
             @endforeach
 
+            <x-input-error :messages="$errors->get('percentage')" class="mt-2" />
             <button type="submit" class="m-2 p-2 btn btn-primary">Submit</button>
         </form>
 

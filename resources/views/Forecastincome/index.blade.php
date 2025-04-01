@@ -4,7 +4,7 @@
         <h4>Forecast Income:{{$totalIncome , 2}}</h4>
 
         <div class="">
-            <a href="{{route('forecasts.edit',$income)}}" class="btn btn-primary">Add Expense</a>
+            <a href="{{route('forecasts.edit',$income)}}" class="btn btn-primary">Change Income</a>
         </div>
 
 
@@ -22,17 +22,11 @@
                         </tr>
                         </thead>
                         <tbody>
-
-
-
-
                         @foreach($expenses as $expense)
                             <tr>
                                 <td>{{$expense['name']}}</td>
-                                {{--                                        <td>{{$tag->user->name}}</td>--}}
                                 <td>{{$expense['percentage']}}%
-                                    <a href="{{route('forecasts.edit',$income->id)}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>
-
+{{--                                    <a href="{{route('forecasts.edit',$income->id)}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>--}}
                                 </td>
                                 <td>
                                     {{ $expense['amount']}}

@@ -20,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => AdminMiddleware::class,
             'permission' =>CheckPermission::class,
         ]);
+
+//        $middleware->append(CheckPermission::class);
     })
 
     ->withExceptions(function (Exceptions $exceptions) {
