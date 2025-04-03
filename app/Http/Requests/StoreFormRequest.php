@@ -41,8 +41,8 @@ class StoreFormRequest extends FormRequest
         $validator->after(function ($validator) {
             $user = auth()->user();
             $exitingPercentage = $user->categories()
-                ->where('category_user.date',Carbon::now()->month)
-                ->where('category_user.date',Carbon::now()->year)
+                ->whereMonth('category_user.date',Carbon::now()->month)
+                ->whereYear('category_user.date',Carbon::now()->year)
                 ->sum('category_user.percentage');
             $percentages = $this->input('percentage', []);
             if (!is_array($percentages)) {

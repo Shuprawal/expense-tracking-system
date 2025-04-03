@@ -55,6 +55,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Category::class)->withPivot('percentage','date')->distinct();
     }
+
     public function expenses()
     {
         return $this->hasMany(Expense::class);
@@ -82,6 +83,10 @@ class User extends Authenticatable
     {
         return$this->roles()->with('permissions');
     }
+    public  function forecastexpenses()
+    {
+        return $this->hasMany(Forecastincome::class);
+    }
 
     public function hasPermission(string $permission): bool
     {
@@ -103,8 +108,6 @@ class User extends Authenticatable
 
     public function getRole(): ?Role
     {
-
-
         return $this->roles()->first();
     }
 

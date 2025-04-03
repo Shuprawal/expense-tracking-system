@@ -20,6 +20,7 @@ class PermissionController extends Controller
         } else {
             $roles = Role::where('name', '!=', 'admin')->get();
         }
+//        dd($request->role_id);
         return view('admin.permissions', compact('permissions', 'roles'));
     }
 
@@ -52,6 +53,21 @@ class PermissionController extends Controller
     {
         $role->permissions()->detach($permission->id);
         return redirect()->back()->with('success', 'Permission removed successfully');
+    }
+    public function search(Request $request)
+    {
+        $search = $request->inputText;
+        $permissions = Permission::where('group', 'LIKE', "%{$search}%")->
+
+        get()->groupBy('group');
+
+//        dd($request->role_id);
+        if ($request->role_id) {
+            $roles = Role::where('id', $request->role_id)->get();
+        } else {
+            $roles = Role::where('name', '!=', 'admin')->get();
+        }
+        return view('admin.permissions', compact('permissions', 'roles'));
     }
 
 }

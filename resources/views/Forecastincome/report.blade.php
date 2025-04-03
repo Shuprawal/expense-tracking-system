@@ -54,6 +54,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <input type="hidden" name="category_id" value="{{$expense['category_id']}}">
+                                        <input type="hidden" name="date" value="{{$selectedMonth}}">
                                         <button type="submit">Delete</button>
                                     </form>
                                 </td>

@@ -42,13 +42,13 @@
                     </div>
 
                 @else
+
                     <div class="shrink-0 flex items-center">
                         <a href="{{ route('dashboard') }}">
                             <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
                         </a>
                     </div>
 
-                    <!-- Navigation Links -->
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('Dashboard') }}
@@ -56,36 +56,38 @@
                     </div>
 
 
-                    <!-- Expenses -->
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link :href="route('expenses.index')" :active="request()->routeIs('expenses.index')">
                             {{ __('Expenses') }}
                         </x-nav-link>
                     </div>
-                    <!-- forecast -->
+
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link :href="route('forecasts.index')" :active="request()->routeIs('forecasts.index')">
                             {{ __('Forecast Income') }}
                         </x-nav-link>
                     </div>
 
-                    <!-- Report -->
+
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link :href="route('forecasts.report')" :active="request()->routeIs('forecasts.report')">
                             {{ __('Report') }}
                         </x-nav-link>
                     </div>
 
-                    <!-- new -->
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link :href="route('new-categories')" :active="request()->routeIs('new-categories.create')">
                             {{ __('new-categories') }}
                         </x-nav-link>
                     </div>
 
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link :href="route('categories.display')" :active="request()->routeIs('categories.display')">
+                            {{ __('Category') }}
+                        </x-nav-link>
+                    </div>
                 @endif
 
-{{--                category--}}
 
             </div>
 
@@ -109,7 +111,7 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
-                        <!-- Authentication -->
+
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
 

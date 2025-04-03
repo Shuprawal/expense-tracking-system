@@ -3,7 +3,6 @@
         <h1>New Expenses</h1>
         <form action="{{ route('expenses.store') }}" method="POST">
             @csrf
-
             <div class="mb-3">
                 <label for="amount" class="form-label">Amount</label>
                 <input type="text" value="{{old('amount')}}" placeholder="Rs" class="form-control @error('amount') is-invalid @enderror" id="amount" name="amount">
@@ -13,14 +12,14 @@
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <textarea type="text" class="form-control @error('description') is-invalid @enderror" id="description" name="description"></textarea>
+                <textarea type="text"  class="form-control @error('description') is-invalid @enderror" id="description" name="description">{{old('description')}}</textarea>
                 @error('description')
                 <p class="invalid-feedback">{{$message}}</p>
                 @enderror
             </div>
             <div class="mb-3">
                 <label for="date" class="form-label">Date</label>
-                <input type="date" class="form-control @error('date') is-invalid @enderror" id="date" name="date">
+                <input type="date" value="{{old('date')}}"  class="form-control @error('date') is-invalid @enderror" id="date" name="date">
                 @error('date')
                 <p class="invalid-feedback">{{$message}}</p>
                 @enderror

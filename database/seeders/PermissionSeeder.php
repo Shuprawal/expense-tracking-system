@@ -28,7 +28,7 @@ class PermissionSeeder extends Seeder
 
         foreach ($routes as $foldRoute) {
             foreach ($foldRoute as $route) {
-                if($route['uri']=='login' || $route['uri']=='forgot-password' || $route['uri']=='reset-password' || $route['uri']=='verify-email' || $route['uri']=='verify-email/{id}/{hash}'|| $route['uri']=='storage/{path}'|| $route['uri']=='up'|| $route['uri']=='/' || $route['uri'] == 'register'|| $route['uri'] == 'reset-password/{token}'|| $route['uri']=='confirm-password'|| $route['uri']=='reset-password/{token}' || $route['uri']=='email/verification-notification') {
+                if($route['uri']=='login' || $route['uri']=='forgot-password' || $route['uri']=='reset-password' || $route['uri']=='verify-email' || $route['uri']=='verify-email/{id}/{hash}'|| $route['uri']=='storage/{path}'|| $route['uri']=='up'|| $route['uri']=='/' || $route['uri'] == 'register'|| $route['uri'] == 'reset-password/{token}'|| $route['uri']=='confirm-password'|| $route['uri']=='attach' || $route['uri']=='email/verification-notification' || $route['uri']=='forecasts' || $route['uri']=='forecast' || $route['uri']=='logout'||$route['uri']=='password'|| $route['uri']=='categories') {
                     break;
                 }
                 Permission::firstOrCreate([

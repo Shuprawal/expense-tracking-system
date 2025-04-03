@@ -24,15 +24,10 @@ class CategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Existing category checkboxes (optional, but required if no new category is provided)
             'categories' => 'nullable|array',
             'categories.*' => 'string|exists:categories,name',
-
-            // New category input (optional, but required if no existing category is selected)
             'new_categories' => 'nullable|array',
             'new_categories.*' => 'string|distinct|required_without:categories|min:1',
-
-            // Date validation
             'date' => ['required', 'date'],
         ];
     }

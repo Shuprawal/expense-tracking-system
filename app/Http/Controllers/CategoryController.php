@@ -20,11 +20,24 @@ class CategoryController extends Controller
      */
     public function index()
     {
+
         $categories = Category::with('users')->get();
         return view('categories.index', compact('categories'));
     }
 
-//
+    public function display()
+    {
+        $user = Auth::user();
+        $categories = Category::with('users')->where('user_id',$user->id)->paginate(7);
+        return view('categories.display', compact('categories'));
+    }
+
+    public function edit($id)
+    {
+        $category = Category::findOrFail($id);
+        return view('categories.edit', compact('category'));
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -54,14 +67,10 @@ class CategoryController extends Controller
                     if ($category) {
                         $category->restore();
                     } else {
-
-
                         $category = Category::create([
                             'name' => $categoryName,
                             'user_id' => auth()->id()]);
-
                     }
-
                     $categoryIDs[] = $category->id;
                 }
             }
@@ -79,6 +88,80 @@ class CategoryController extends Controller
             return back()->with('error', $th->getMessage());
         }
     }
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string',
+        ]);
+        $newName = $request->get('name');
+        $user = Auth::user();
+
+        $categoryTrashed = Category::onlyTrashed()->where('name', $newName)->first();
+
+        if ($categoryTrashed) {
+            $categoryTrashed->restore();
+            $categoryTrashed -> update(['user_id' => $user->id]);
+            $newCategory = $categoryTrashed;
+        }
+        else
+        {
+            $existingCategory = Category::where('name', $newName)->first();
+
+            if ($existingCategory) {
+                $newCategory = $existingCategory;
+            }else{
+                $newCategory= Category::create([
+                    'name' => $newName,
+                    'user_id' => $user->id,    //not working
+                    'date' => Carbon::now()->format('Y-m-d'),
+                ]);
+//                $newCategory = $user->categories()->create([
+//                    'name' => $newName,
+//                    'date' => Carbon::now()->format('Y-m-d'),
+//                ]);
+            }
+
+        }
+        if (!$newCategory) {
+            return redirect()->back()->with('error', 'Failed to create or retrieve the category.');
+        }
+
+        $oldCategory = Category::findOrFail($id);
+
+
+        session()->flash('confirm_transfer', [
+            'old_category_id' => $oldCategory->id,
+            'new_category_id' => $newCategory->id,
+            'message' => 'Do you want to transfer all expenses from "' . $oldCategory->name . '" to "' . $newCategory->name . '"?',
+        ]);
+        return redirect()->route('categories.display')->with('success', 'Categories updated successfully.');
+
+    }
+
+    public function transfer(Request $request)
+    {
+
+        $oldCategoryId = $request->input('old_category');
+        $newCategoryId = $request->input('new_category');
+        if($request->input('transfer') == 'yes') {
+
+
+            $oldCategory = Category::find($oldCategoryId);
+            $newCategory = Category::find($newCategoryId);
+
+//            dd($oldCategory, $newCategory);
+            if (!$oldCategory || !$newCategory) {
+                return redirect()->route('categories.display')->with('error', 'Invalid category selection.');
+            }
+
+            Expense::where('category_id', $oldCategoryId)->update(['category_id' => $newCategoryId]);
+            Category::findOrFail($oldCategoryId)->delete();
+            return redirect()->route('categories.display')->with('success', 'Categories transferred successfully.');
+        }
+        Category::findOrFail($oldCategoryId)->delete();
+        return redirect()->route('categories.display')->with('success', 'Categories were not transferred successfully.');
+    }
+
 
 
     /**
@@ -158,14 +241,37 @@ class CategoryController extends Controller
         return redirect()->route('forecasts.index');
     }
 
+
+
     public function forecastDetach(Request $request)
     {
 
         $user = Auth::user();
-        $user->categories()->whereMonth('date', carbon::now()->month)
-            ->whereYear('date',carbon::now()->year)
-            ->detach($request->category_id);
-        return redirect()->back();
+
+        $month = Carbon::createFromFormat('m', $request->date);
+
+
+        $start = $month->startOfMonth();
+        $end = $month->endOfMonth();
+        if (!empty($request->category_id)) {
+
+            $user->categories()
+                ->wherePivot('category_id', $request->category_id)
+                ->wherePiviot('date','>=', $start)
+                ->wherePivot('date','<=', $end)
+                ->detach();
+
+            return redirect()->back()->with('success', 'User category deleted successfully.');
+        }
+
+        // If category_id is empty or not provided
+        return redirect()->back()->with('error', 'Category ID is required.');
     }
+
+
+
+
+
+
 
 }

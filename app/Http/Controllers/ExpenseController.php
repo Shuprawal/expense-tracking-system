@@ -15,27 +15,53 @@ class ExpenseController extends Controller
     /**
      * Display a listing of the resource.
      */
+//    public function index(Request $request)
+//    {
+//        $user = auth()->user();
+//        $selectedMonth = $request->input( 'month',now()->month);
+//
+//
+//        $expenses = Expense::where('user_id',$user->id)->whereMonth('date',((int)$selectedMonth))
+//            ->whereHas('category', function ($query) use ($user, $selectedMonth) {
+//                $query->withTrashed()->whereHas('users', function ($subQuery) use ($user, $selectedMonth) {
+//                    $subQuery->where('category_user.user_id', $user->id)
+//                        ->whereMonth('date', (int)$selectedMonth);
+//                });
+//            })->distinct()->paginate(4);
+//
+//
+//        $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
+//            $query->whereMonth('date', $selectedMonth)
+//                ->where('user_id', $user->id);
+//
+//        })->withTrashed()->distinct()->get();
+//
+//        return view('expenses.index', compact('categories','expenses', 'selectedMonth'));
+//
+//    }
+
+
     public function index(Request $request)
     {
         $user = auth()->user();
-        $selectedMonth = $request->input( 'month',now()->month);
+        $selectedMonth = $request->input('month', now()->month);
 
-        $expenses = Expense::where('user_id',$user->id)->whereMonth('date',((int)$selectedMonth))
-            ->whereHas('category', function ($query) use ($user, $selectedMonth) {
-                $query->whereHas('users', function ($subQuery) use ($user, $selectedMonth) {
-                    $subQuery->where('category_user.user_id', $user->id)
-                        ->whereMonth('date', (int)$selectedMonth);
-                });
-            })->distinct()->paginate(3);
+        $expenses = Expense::where('user_id', $user->id)
+            ->whereMonth('date', (int)$selectedMonth)
+            ->whereHas('category', function ($query) {
+                $query->withTrashed();
+            })
+            ->orderBy('date', 'DESC')
+            ->paginate(4);
 
         $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
-            $query->whereMonth('date', $selectedMonth)
+            $query
                 ->where('user_id', $user->id);
+        })
+            ->withTrashed()
+            ->get();
 
-        })->withTrashed()->distinct()->get();
-
-        return view('expenses.index', compact('categories','expenses', 'selectedMonth'));
-
+        return view('expenses.index', compact('categories', 'expenses', 'selectedMonth'));
     }
 
     /**
@@ -96,15 +122,39 @@ class ExpenseController extends Controller
      */
     public function edit(Expense $expense)
     {
-        //
+        $categories = Category::with('users')
+            ->whereHas('users', function ($query) {
+                $query->where('users.id', auth()->id())
+                    ->whereMonth('date', now()->month);
+            })
+            ->get();
+        return view('expenses.edit',compact('expense','categories'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Expense $expense)
+    public function update(IncomeRequest $request, Expense $expense)
     {
-        //
+        $user = auth()->user();
+
+        try {
+            DB::beginTransaction();
+
+            $expense ->update([
+                'amount'=>$request->amount,
+                'description'=> $request->description,
+                'date'=> $request->date,
+                'category_id'=> $request->category_id
+            ]);
+
+            DB::commit();
+            return redirect()->route('expenses.index');
+
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -112,6 +162,37 @@ class ExpenseController extends Controller
      */
     public function destroy(Expense $expense)
     {
-        //
+
+        $expense->delete();
+        return redirect()->route('expenses.index');
     }
+    public function search(Request $request)
+    {
+        $user = auth()->user();
+        $search = $request->input('inputText');
+        $selectedMonth = $request->input('month', now()->month);
+
+//
+        $expenses = Expense::where('user_id', $user->id)
+        ->where(function ($query) use ($search) {
+            $query->where('description', 'LIKE', "%{$search}%")
+                ->orWhere('amount', 'LIKE', "%{$search}%")
+                ->orWhereHas('category', function ($query) use ($search) {
+                    $query->where('name', 'LIKE', "%{$search}%");
+                });
+        })
+            ->orderBy('date', 'DESC')
+            ->paginate(5);
+
+        $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
+            $query->whereMonth('date', $selectedMonth)
+                ->where('user_id', $user->id);
+        })
+            ->withTrashed()
+            ->distinct()
+            ->get();
+
+        return view('expenses.index', compact('categories', 'expenses', 'selectedMonth', 'search'));
+    }
+
 }

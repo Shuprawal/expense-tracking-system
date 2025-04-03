@@ -66,7 +66,7 @@ class ForecastincomeController extends Controller
         }
         try {
             DB::beginTransaction();
-              $user-> $forecastIncome = Forecastincome::create([
+            $forecastIncome =  $user-> forecastexpenses()-> create([
                     'amount'=>$amount,
                 ]);
                 $forecastIncome->statements()->create([
@@ -98,10 +98,7 @@ class ForecastincomeController extends Controller
     {
         $request->validate([
             'amount' => 'required|numeric|min:1',
-
         ]);
-
-
         $forcast = Forecastincome::where('id',$id)->first();
 
         $forcast -> update([
@@ -129,8 +126,8 @@ class ForecastincomeController extends Controller
                 ->whereHas('users', function ($query) use ($selectedMonth) {
                     $query->where('user_id', auth()->id())
                     ->whereMonth('category_user.date', Carbon::now()->month);
-                })->withTrashed()
-                ->withPivot('percentage', 'date')
+                })
+                ->withPivot('percentage', 'date')->withTrashed()
                 ->get()
                 ->unique('id');
 
@@ -139,7 +136,7 @@ class ForecastincomeController extends Controller
                 ->whereHas('users', function ($query) use ($selectedMonth) {
                     $query->where('user_id', auth()->id())
                         ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth));
-                })->withTrashed()
+                })
             ->withPivot('percentage', 'date')
             ->get()
             ->unique('id');
