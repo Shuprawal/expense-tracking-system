@@ -7,44 +7,23 @@ use App\Models\Budget;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Income;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ExpenseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-//    public function index(Request $request)
-//    {
-//        $user = auth()->user();
-//        $selectedMonth = $request->input( 'month',now()->month);
-//
-//
-//        $expenses = Expense::where('user_id',$user->id)->whereMonth('date',((int)$selectedMonth))
-//            ->whereHas('category', function ($query) use ($user, $selectedMonth) {
-//                $query->withTrashed()->whereHas('users', function ($subQuery) use ($user, $selectedMonth) {
-//                    $subQuery->where('category_user.user_id', $user->id)
-//                        ->whereMonth('date', (int)$selectedMonth);
-//                });
-//            })->distinct()->paginate(4);
-//
-//
-//        $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
-//            $query->whereMonth('date', $selectedMonth)
-//                ->where('user_id', $user->id);
-//
-//        })->withTrashed()->distinct()->get();
-//
-//        return view('expenses.index', compact('categories','expenses', 'selectedMonth'));
-//
-//    }
+
 
 
     public function index(Request $request)
     {
+
         $user = auth()->user();
+        $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());
+        $end=$request->input('end',Carbon::now()->endOfMonth()->toDateString());
         $selectedMonth = $request->input('month', now()->month);
+
 
         $expenses = Expense::where('user_id', $user->id)
             ->whereMonth('date', (int)$selectedMonth)
