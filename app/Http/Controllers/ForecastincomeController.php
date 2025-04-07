@@ -16,7 +16,7 @@ class ForecastincomeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function display()
     {
         $user = auth()->user();
         $income = Forecastincome::where('user_id',$user->id)->first();
@@ -38,7 +38,18 @@ class ForecastincomeController extends Controller
 
             ];
         }
-        return view('forecastincome.index',compact('expenses','totalIncome','income'));
+        return view('forecastincome.display',compact('expenses','totalIncome','income'));
+
+    }
+    public function index(Request $request)
+    {
+        $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());
+        $end=$request->input('end',Carbon::now()->endOfMonth()->toDateString());
+        $user = auth()->user();
+        $incomes = Forecastincome::where('user_id',$user->id)
+        ->whereBetween('date',[$start,$end])->paginate(10);
+
+        return view('forecastincome.index',compact('incomes'));
 
     }
 
@@ -58,16 +69,22 @@ class ForecastincomeController extends Controller
         $user = auth()->user();
         $request->validate([
             'amount' => 'required|numeric|min:1',
+            'date' => 'required|date',
+            'description' => 'required',
         ]);
-        if($request->input('type')=="yearly"){
-            $amount = $request->input('amount') / 12;
-        }else{
-            $amount = $request->input('amount');
-        }
+
+//        if($request->input('type')=="yearly"){
+//            $amount = $request->input('amount') / 12;
+//        }else{
+//            $amount = $request->input('amount');
+//        }
+        $amount = $request->input('amount');
         try {
             DB::beginTransaction();
             $forecastIncome =  $user-> forecastexpenses()-> create([
                     'amount'=>$amount,
+                    'date'=>$request->input('date'),
+                    'description'=>$request->input('description'),
                 ]);
                 $forecastIncome->statements()->create([
                     'amount'=>$amount,
@@ -112,13 +129,23 @@ class ForecastincomeController extends Controller
     public function report(Request $request)
     {
         $selectedMonth = $request->input('month', now()->month);
+        $selectedYear = $request->input('year', now()->year);
 
+        $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
         $user = auth()->user();
-        $income = Forecastincome::where('user_id', $user->id)->first();
-        if (!$income) {
-            return redirect()->route('forecasts.create');
+        $start= $selectedDate->copy()->startOfMonth()->toDateString();
+        $end=$selectedDate->copy()->endOfMonth()->toDateString();
+        $startNext= $selectedDate->copy()->startOfMonth()->addMonth(1)->toDateString();
+        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
+
+        $income = Forecastincome::where('user_id', $user->id)
+            ->whereBetween('date', [$start, $end])
+
+            ->sum('amount');
+        if (!$income && $selectedDate < Carbon::now()) {
+            return redirect()->route('incomes.create');
         } else {
-            $totalIncome = $income->amount;
+            $totalIncome = $income;
         }
 
         if ($selectedMonth == Carbon::now()->addMonth(1)->month || $selectedMonth == Carbon::now()->month) {
@@ -212,6 +239,119 @@ class ForecastincomeController extends Controller
 
         return view('forecastincome.report', compact('expenses', 'totalIncome', 'income', 'selectedMonth'));
     }
+// public function report(Request $request)
+//    {
+//        $selectedMonth = $request->input('month', now()->month);
+//        $selectedYear = $request->input('year', now()->year);
+//
+//        $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
+//        $user = auth()->user();
+//        $start= $selectedDate->copy()->startOfMonth()->toDateString();
+//        $end=$selectedDate->copy()->endOfMonth()->toDateString();
+//        $startNext= $selectedDate->copy()->startOfMonth()->addMonth(1)->toDateString();
+//        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
+//
+//        $income = Forecastincome::where('user_id', $user->id)
+//            ->whereBetween('date', [$start, $end])
+//
+//            ->sum('amount');
+//        if (!$income) {
+//            return redirect()->route('incomes.create');
+//        } else {
+//            $totalIncome = $income;
+//        }
+//
+//        if ($selectedMonth == Carbon::now()->addMonth(1)->month || $selectedMonth == Carbon::now()->month) {
+//            $categories = $user->categories()
+//                ->whereHas('users', function ($query) use ($selectedMonth) {
+//                    $query->where('user_id', auth()->id())
+//                    ->whereMonth('category_user.date', Carbon::now()->month);
+//                })
+//                ->withPivot('percentage', 'date')->withTrashed()
+//                ->get()
+//                ->unique('id');
+//
+//        }else{
+//            $categories = $user->categories()
+//                ->whereHas('users', function ($query) use ($selectedMonth) {
+//                    $query->where('user_id', auth()->id())
+//                        ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth));
+//                })
+//            ->withPivot('percentage', 'date')
+//            ->get()
+//            ->unique('id');
+//        }
+//
+//        $expenses = [];
+//        foreach ($categories as $category) {
+//
+//            if ($selectedMonth == Carbon::now()->addMonth()->month ) {
+//
+//                $pivot = $category->users()
+//                    ->wherePivot('user_id', $user->id)
+////                    ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth))
+//                    ->whereMonth('category_user.date', Carbon::now()->month)
+//                    ->withPivot('percentage')
+//                    ->first();
+//
+//            }else{
+//                $pivot = $category->users()
+//                    ->wherePivot('user_id', $user->id)
+//                    ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth))
+//                    ->withPivot('percentage')
+//                    ->first();
+//            }
+//
+//            $percentage = $pivot?->pivot->percentage ?? 0;
+//            $amount = ($percentage / 100) * $totalIncome;
+//
+//            if ($selectedMonth == Carbon::now()->addMonth(1)->month) {
+//
+//
+//                $spended = Expense::where('user_id', $user->id)
+//                    ->where('category_id', $category->id)
+//                    ->whereMonth('date', $selectedMonth-1 )
+//                    ->get();
+//
+//                $totalExpense = $spended->sum('amount');
+//                $spendPercentage = round($totalExpense / $totalIncome * 100, 2);
+//                $forecastPercentage = round(($percentage + $spendPercentage) / 2, 2);
+//                $amount = ($forecastPercentage / 100) * $totalIncome;
+//                $expenses[] = [
+//                    'name' => $category->name,
+//                    'percentage' => $forecastPercentage,
+//                    'amount' => $amount,
+//                    'spend' => 0,
+//                    'spendPercentage' => 0,
+//                    'remaining' => 0,
+//                    'category_id' => $category->id,
+//
+//                ];
+//
+//            } else {
+//
+//                $spended = Expense::where('user_id', $user->id)
+//                    ->where('category_id', $category->id)
+//                    ->whereMonth('date', $selectedMonth)
+//                    ->get();
+//                $totalExpense = $spended->sum('amount');
+//                $remaining = $amount - $totalExpense;
+//                $spendPercentage = round($totalExpense / $totalIncome * 100, 2);
+//
+//                $expenses[] = [
+//                    'name' => $category->name,
+//                    'percentage' => $percentage,
+//                    'amount' => $amount,
+//                    'spend' => $totalExpense,
+//                    'spendPercentage' => $spendPercentage,
+//                    'remaining' => $remaining,
+//                    'category_id' => $category->id,
+//                ];
+//            }
+//        }
+//
+//        return view('forecastincome.report', compact('expenses', 'totalIncome', 'income', 'selectedMonth'));
+//    }
 
 
 

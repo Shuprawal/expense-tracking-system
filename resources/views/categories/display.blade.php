@@ -20,6 +20,7 @@
                 <th>Category Name</th>
                 <th>Edit</th>
                 <th>Delete</th>
+                <th>View</th>
 
             </tr>
             </thead>
@@ -32,6 +33,9 @@
                     </td>
                     <td>
                         <x-delete-button :route="'categories.destroy'" :parameters="$category->id" />
+                    </td>
+                    <td>
+                       <a class="dropdown-item" href="{{ route('categories.show', $category->id) }}">watch</a>
                     </td>
                 </tr>
             @endforeach

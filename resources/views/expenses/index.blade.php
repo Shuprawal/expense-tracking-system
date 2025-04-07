@@ -1,70 +1,66 @@
 
 <x-app-layout>
-<div class="container">
-    <div class="mt-4">
-        <a href="{{route('expenses.create')}}" class="btn btn-primary">Add</a>
-    </div>
+{{--    @dd($start,$end)--}}
+{{--    @dd($search)--}}
 
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold text-primary">Expenses </h1>
+            <a href="{{ route('expenses.create') }}" class="btn btn-lg btn-success shadow">+ Add Expense</a>
+        </div>
 
-
-
-    <div class="mt-4">
-        <div class="dropdown">
-            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Choose Category
-            </button>
-            <ul class="dropdown-menu dropdown-menu-dark">
-                @forelse($categories as $category)
-                    <li>
-                        <a href="{{route('categories.show',$category->id,$selectedMonth)}}">{{$category->name}}</a>
-
-                    </li>
+        <div class="d-flex flex-wrap gap-3 mb-4">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Choose Category
+                </button>
+                <ul class="dropdown-menu">
+                    @forelse($categories as $category)
+                        <li><form class="dropdown-item" action="{{route('expenses.index')}}" method="get">
+                                <input type="hidden" name="category" value="{{$category->id}}">
+{{--                                <input type="hidden" name="category" value="{{ $category->name }}">--}}
+                                <button type="submit">{{ $category->name }}</button>
+                            </form></li>
+{{--                        <li><a class="dropdown-item" href="{{ route('expenses.index', $category->id) }}">{{ $category->name }}</a></li>--}}
                     @empty
-                        <li>No expenses in any category</li>
-                @endforelse
-            </ul>
-        </div>
-    </div>
-    <x-search :route="'expenses.search'"/>
-
-
-    <x-month-select :route="'expenses.index'" :parameters="[]" />
-    <x-date-duration :route="'expenses.index'" :parameters="[]" />
-    <h3>list of expenses for month {{ \Carbon\Carbon::create()->month((int)$selectedMonth)->format('F') }} are:</h3>
-    @forelse($expenses as $expense)
-        <div class="card m-2 p-2">
-            <div class="card-header">
-{{--                @dd($expense->category->name )--}}
-                @if($expense->category)
-                    {{ $expense->category->name }}
-                @else
-                    <span class="text-danger">Category not found</span>
-                @endif
-                {{$expense->date}}
-            </div>
-            <div class="card-body">
-                <div>
-                    <p>{{$expense->description}}</p>
-                    <p>{{$expense->amount}}</p>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <x-delete-button :route="'expenses.destroy'" :parameters="$expense->id" />
-
-                    <a href="{{route('expenses.edit',$expense->id)}}" class="btn btn-dark">edit</a>
-                </div>
+                        <li class="dropdown-item text-muted">No expenses in any category</li>
+                    @endforelse
+               </ul>
 
             </div>
+            <x-search :route="'expenses.index'"/>
+            <x-date-duration :route="'expenses.index'" :parameters="[]" />
         </div>
-    @empty
-    <li>No expenses for this month</li>
-    @endforelse
 
-    <div class="mt-4">
-        {{ $expenses->appends(['month' => request('month')])->links() }}
+{{--        <h3 class="text-secondary">Expenses for {{ \Carbon\Carbon::create()->month((int)$selectedMonth)->format('F') }}:</h3>--}}
+
+        <div class="row">
+            @forelse($expenses as $expense)
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 rounded-lg mb-3">
+                        <div class="card-header bg-dark text-white d-flex justify-content-between">
+                            <span>{{ $expense->category->name }}</span>
+                            <span class="badge bg-light text-dark">{{ $expense->date }}</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="fw-bold text-primary">${{ number_format($expense->amount, 2) }}</p>
+                            <p class="text-muted">{{ $expense->description }}</p>
+                            <div class="d-flex justify-content-between mt-3">
+                                <x-delete-button :route="'expenses.destroy'" :parameters="$expense->id" />
+                                <a href="{{ route('expenses.edit', $expense->id) }}" class="btn btn-outline-dark btn-sm">Edit</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12 text-center text-muted">
+                    <p>No expenses for this month</p>
+                </div>
+            @endforelse
+        </div>
+
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $expenses->appends(['inputText' => request('inputText'),'category'=>request('category')])->links() }}
+        </div>
     </div>
-</div>
-
-
 </x-app-layout>
-
-

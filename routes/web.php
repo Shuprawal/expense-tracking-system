@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ForecastincomeController;
+use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
@@ -24,12 +25,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('expenses/search',[ExpenseController::class, 'search'])->name('expenses.search');
     Route::resource('expenses',ExpenseController::class);
     Route::get('categories/display', [CategoryController::class, 'display'])->name('categories.display');
-    Route::post('categories/transfer', [CategoryController::class, 'transfer'])->name('categories.transfer');
+//    Route::post('categories/transfer', [CategoryController::class, 'transfer'])->name('categories.transfer');
     Route::resource('categories',CategoryController::class)->except('show');
     Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
 
+    Route::resource('incomes',IncomeController::class);
 
     Route::resource('forecasts',ForecastincomeController::class);
+    Route::get('forecasts/display',[ForecastincomeController::class,'display'])->name('forecasts.display');
     Route::get('forecasts/calculation',[ForecastincomeController::class, 'calculation'])->name('forecasts.calculation');
     Route::get('forecasts/expense/report',[ForecastincomeController::class, 'report'])->name('forecasts.report');
 
@@ -57,7 +60,7 @@ Route::middleware(['admin',
     Route::get('permissions/search', [PermissionController::class, 'search'])->name('permissions.search');
     Route::resource('permissions',PermissionController::class)->except('index');
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
-
+    Route::put('/categories/disable/{category}', [CategoryController::class, 'disable'])->name('categories.disable');
 
 
     Route::resource('roles',RoleController::class);

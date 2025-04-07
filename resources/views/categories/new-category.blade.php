@@ -28,6 +28,14 @@
                 </div>
                 <button type="button" class="btn btn-success btn-sm mt-2" onclick="addCategory()">+ Add Another</button>
                 <x-input-error :messages="$errors->get('new_categories')" class="mt-2" />
+
+
+                @for ($i = 0; $i < count(old('new_categories', [])); $i++)
+                    @if ($errors->has("new_categories.$i"))
+                        <div class="text-danger mt-2">{{ $errors->first("new_categories.$i") }}</div>
+                    @endif
+                @endfor
+
             </div>
 
             <div class="mb-3">

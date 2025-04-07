@@ -1,48 +1,45 @@
-<x-app-layout>
-    <div class="container m-4 p-4">
-        <h1 class="fw-bold">Forecast Expenses</h1>
-        <h4>Forecast Income:{{$totalIncome , 2}}</h4>
 
-        <div class="">
-            <a href="{{route('forecasts.edit',$income)}}" class="btn btn-primary">Change Income</a>
+<x-app-layout>
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold text-primary">Income</h1>
+            <a href="{{ route('incomes.create') }}" class="btn btn-lg btn-success shadow">+ Add Income</a>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 mb-4">
+
+            <x-search :route="'expenses.search'"/>
+            <x-date-duration :route="'forecasts.index'" :parameters="[]" />
         </div>
 
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                        <tr>
-                            <th scope="col">Category</th>
-                            <th scope="col">Percentage</th>
-                            <th scope="col">Amount to spend</th>
+        <div class="row">
+            @forelse($incomes as $income)
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 rounded-lg mb-3">
+                        <div class="card-header bg-dark text-white d-flex justify-content-between">
 
-
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($expenses as $expense)
-                            <tr>
-                                <td>{{$expense['name']}}</td>
-                                <td>{{$expense['percentage']}}%
-{{--                                    <a href="{{route('forecasts.edit',$income->id)}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>--}}
-                                </td>
-                                <td>
-                                    {{ $expense['amount']}}
-                                </td>
-
-
-                            </tr>
-                        @endforeach
-
-
-
-
-                        </tbody>
-                    </table>
+                            <span class="badge bg-light text-dark">{{ $income->date }}</span>
+                        </div>
+                        <div class="card-body">
+                            <p class="fw-bold text-primary">${{ number_format($income->amount, 2) }}</p>
+                            <p class="text-muted">{{ $income->description }}</p>
+                            <div class="d-flex justify-content-between mt-3">
+                                <x-delete-button :route="'expenses.destroy'" :parameters="$income->id" />
+                                <a href="{{ route('expenses.edit', $income->id) }}" class="btn btn-outline-dark btn-sm">Edit</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            @empty
+                <div class="col-12 text-center text-muted">
+                    <p>No expenses for this month</p>
+                </div>
+            @endforelse
+        </div>
+
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $incomes->appends(['incomes' => request('incomes')])->links() }}
         </div>
     </div>
 </x-app-layout>

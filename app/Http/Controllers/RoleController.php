@@ -12,9 +12,11 @@ class RoleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::where('name', '!=', 'admin')->get();
+       $search =$request->input('inputText');
+        $roles = Role::where('name', '!=', 'admin')
+            ->where('name','LIKE',"%{$search}%")->get();
         return view('roles.index', compact('roles'));
     }
 
@@ -40,22 +42,28 @@ class RoleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Role $role)
+    public function show(Request $request,Role $role)
     {
-
+        $search =$request->input('inputText');
         $users = User::with('roles')
+            ->where('username','LIKE',"%{$search}%")
             ->whereDoesntHave('roles', function ($query) {
                 $query->where('name',  'admin');
             })
 
-            ->paginate(9);
+            ->paginate(7);
 
         return view('roles.show',compact('role','users'));
     }
     public function destroy(Role $role)
     {
-        $role->delete();
-        return redirect()->route('roles.index');
+        try {
+            $role->delete();
+            return redirect()->route('roles.index');
+        }catch (\Exception $exception){
+            return redirect()->route('roles.index')->with('error','cannot delete the role id it has any permission' );
+        }
+
     }
 
 

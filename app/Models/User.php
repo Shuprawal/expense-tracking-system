@@ -94,9 +94,15 @@ class User extends Authenticatable
             $query->where('name', $permission);
         })->exists();
     }
-    public function isAdmin()
+//    public function isAdmin()
+//    {
+//        return $this->roles->contains('name', 'admin');
+//    }
+    public function hasAdminRole(): bool
     {
-        return $this->roles->contains('name', 'admin');
+        return $this->roles->contains(function ($role) {
+            return $role->name === 'admin';
+        });
     }
 
     public function scopeIsNotAdmin($query)
@@ -106,9 +112,15 @@ class User extends Authenticatable
      });
     }
 
-    public function getRole(): ?Role
+    public function getRole()
     {
-        return $this->roles()->first();
+//        return $this->roles()->first();
+        return $this->roles;
     }
+    public function getRoleNames()
+    {
+        return $this->roles->pluck('name')->toArray();
+    }
+
 
 }

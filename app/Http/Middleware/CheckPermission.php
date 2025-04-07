@@ -18,18 +18,48 @@ class CheckPermission
     {
 
         $user = Auth::user();
-        $role = $user->getRole();
+//        $role = $user->getRole();
 
-        if ($role->isAdmin()) {
+        $routeName = $request->route()->getName();
+
+        $publicRoutes = [
+            'forecasts.index',
+            'forecasts.report',
+            'forecasts.calculation',
+            'forecast',
+            'forecast.percentage',
+            'categories.show',
+            'welcome',
+            'dashboard',
+            'categories.index',
+            'categories.create',
+            'categories.store',
+            'categories.display',
+            'categories.transfer',
+            'categories.show',
+            'new-categories'
+
+        ];
+
+        if (in_array($routeName, $publicRoutes)) {
             return $next($request);
         }
-            $hasPermission = $role->hasPermission($request->route()->getName(), $role->id);
 
-            if ($hasPermission) {
+
+
+        if ($user->hasAdminRole()) {
+            return $next($request);
+        }
+
+
+        $roles = $user->getRole();
+        foreach ($roles as $role) {
+            if ($role->hasPermission($routeName, $role->id)) {
                 return $next($request);
-            } else {
-                abort(401);
             }
+        }
+
+        abort(401);
 
     }
 }

@@ -6,6 +6,7 @@
         </div>
         <div class="card">
 
+            <x-search :route="'roles.index'"/>
             @forelse($roles as $role)
                 <div class="card-body p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition duration-200">
                     <ul class="space-y-2">

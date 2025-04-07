@@ -20,10 +20,14 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('categories')
-            ->isNotAdmin()
+        $search = $request->input('inputText');
+        $users = User::where('username','LIKE',"%{$search}%")
+            ->with('categories')->isNotAdmin()
+            ->withCount('categories')
+            ->withCount('expenses')
+            ->with('roles')
             ->get();
 
         return view('admin.index', compact('users'));
@@ -62,7 +66,11 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        //
+        $user->with('categories')->withWhereHas('expenses', function ($query) {
+            $query->orderBy('date', 'desc');
+        });
+
+        return view('admin.show', compact('user') );
     }
 
     /**
@@ -86,7 +94,10 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
-        //
+        $user->roles()->detach();
+        $user->categories()->detach();
+        $user->delete();
+        return redirect()->route('users.index')->with('success', 'User has been deleted');
     }
 //    public function permission()
 //    {

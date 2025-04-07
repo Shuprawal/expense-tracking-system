@@ -31,11 +31,12 @@ class PermissionController extends Controller
     {
         DB::beginTransaction();
         try {
-            foreach ($request->permissions as $roleId => $permissionIds) {
-                $role = Role::findOrFail($roleId);
-
-                $role->permissions()->sync($permissionIds);
+            $allRoles = Role::all();
+            foreach ($allRoles as $role) {
+                $permissionId = $request->permissions[$role->id]??[];
+                $role->permissions()->sync($permissionId);
             }
+
 
             DB::commit();
             return redirect()->back()->with('success', 'Permissions updated successfully!');
@@ -44,6 +45,27 @@ class PermissionController extends Controller
             return redirect()->back()->with('error', 'Something went wrong while updating permissions.');
         }
     }
+//    public function store(Request $request)
+//    {
+////        dd($request->all());
+//        DB::beginTransaction();
+//        try {
+//            $allRoles = Role::all();
+//
+//            foreach ($allRoles as $role) {
+//                $permissionIds = $request->permissions[$role->id] ?? [];
+//
+//                $role->permissions()->sync($permissionIds);
+//            }
+//
+//            DB::commit();
+//            return redirect()->back()->with('success', 'Permissions updated successfully!');
+//        } catch (\Exception $e) {
+//            DB::rollBack();
+//            return redirect()->back()->with('error', 'Something went wrong while updating permissions.');
+//        }
+//    }
+
 
 
     /**
@@ -61,7 +83,6 @@ class PermissionController extends Controller
 
         get()->groupBy('group');
 
-//        dd($request->role_id);
         if ($request->role_id) {
             $roles = Role::where('id', $request->role_id)->get();
         } else {

@@ -1,17 +1,20 @@
 <x-app-layout>
 
-
     <div class="container m-4 p-4">
         <div class="card">
             <div class="card-body">
+                <x-search :route="'users.index'"/>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead class="table-light">
                         <tr>
                             <th scope="col">Name</th>
-                            <th scope="col">categories</th>
-{{--                            <th scope="col">percentage</th>--}}
-
+                            <th scope="col">Email</th>
+                            <th scope="col">Total categories count</th>
+                            <th scope="col">Total expenses count</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Action</th>
+                            <th scope="col">View</th>
 
                         </tr>
                         </thead>
@@ -19,24 +22,22 @@
 
                         @foreach($users as $user)
                             <tr>
-                                <td>{{ $user->username }}</td>
+                                <td>{{ ucfirst($user->username) }}</td>
+                                <td>{{ $user->email }}</td>
+                                <td>{{ $user->categories_count }} </td>
+                                <td>{{ $user->expenses_count }} </td>
+                                <td>{{ ucfirst($user->roles->pluck('name')->implode(', ')) }}</td>
                                 <td>
-                                    <div style="display: flex; flex-direction: column; gap: 20px;">
-                                        @forelse($user->categories as $category)
-                                            <div>
-                                                {{ $category->name }} - {{ $category->pivot->percentage }}% ({{ \Carbon\Carbon::parse($category->pivot->date)->format('F')  }})
-                                            </div>
-                                        @empty
-                                            <p>No Category Selected</p>
-                                        @endforelse
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a href="{{route('users.edit',$user->id)}}}">edit</a>
+                                        <x-delete-button :route="'users.destroy'" :parameters="$user->id"/>
                                     </div>
+                                </td>
+                                <td>
+                                    <a href="{{route('users.show',$user->id)}}"><i class="bi bi-eye"></i> Watch</a>
                                 </td>
                             </tr>
                         @endforeach
-
-
-
-
 
                         </tbody>
                     </table>

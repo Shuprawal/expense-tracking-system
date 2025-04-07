@@ -6,7 +6,7 @@
 
 
 
-                @if(Auth::user()->isAdmin())
+                @if(Auth::user()->hasAdminRole())
 
                     <div class="shrink-0 flex items-center">
                         <a href="{{ route('dashboard') }}">
@@ -21,7 +21,7 @@
                     </div>
 
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('categories.index')">
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
                             {{ __('Users') }}
                         </x-nav-link>
                     </div>
@@ -49,6 +49,7 @@
                         </a>
                     </div>
 
+
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                             {{ __('Dashboard') }}
@@ -61,6 +62,11 @@
                             {{ __('Expenses') }}
                         </x-nav-link>
                     </div>
+{{--                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">--}}
+{{--                        <x-nav-link :href="route('forecasts.display')" :active="request()->routeIs('forecasts.display')">--}}
+{{--                            {{ __('Income') }}--}}
+{{--                        </x-nav-link>--}}
+{{--                    </div>--}}
 
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                         <x-nav-link :href="route('forecasts.index')" :active="request()->routeIs('forecasts.index')">

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Category extends Model
 {
     use SoftDeletes;
-    protected $fillable = ['name', 'user_id'];
+    protected $fillable = ['name', 'user_id','disabled'];
 
 
 
@@ -25,6 +25,10 @@ class Category extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function isDisabled(): bool
+    {
+        return $this->disabled == "yes";
     }
 
 }

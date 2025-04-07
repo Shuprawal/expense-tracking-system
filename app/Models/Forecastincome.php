@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Forecastincome extends Model
 {
     use Statementable;
-    protected $fillable = ['user_id', 'amount'];
+    protected $fillable = ['user_id', 'amount','date','description'];
 
     public function users()
     {

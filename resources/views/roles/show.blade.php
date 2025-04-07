@@ -1,4 +1,5 @@
 <x-app-layout>
+
     <div class="container m-4">
         <div class="card-header d-flex align-items-center gap-4">
             <h1>Role name: {{ $role->name }}</h1>
@@ -8,6 +9,7 @@
         <h3>User List</h3>
 
         <div class="card row gap-3">
+            <x-search :route="'roles.show'" :parameters="['role'=>$role->id]"/>
             @forelse($users as $user)
 
                 <div class="d-flex gap-3 align-items-center m-3">
@@ -33,7 +35,7 @@
             @endforelse
         </div>
         <div class="mt-3">
-            {{$users->links()}}
+            {{$users->appends(['inputText'=>request('inputText')])->links()}}
         </div>
 
     </div>

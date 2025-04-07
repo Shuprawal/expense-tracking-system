@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CategoryRequest;
+use App\Http\Requests\DateDurationRequest;
 use App\Http\Requests\ForecastPercentage;
 use App\Http\Requests\StoreFormRequest;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\User;
+use App\View\Components\DateDuration;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,17 +20,27 @@ class CategoryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
 
-        $categories = Category::with('users')->get();
+        $search=$request->input('inputText');
+        $categories = Category::with('users')
+            ->where('name','LIKE',"%{$search}%")
+//            ->where('disabled','no')
+            ->withCount('users')
+            ->paginate(10);
         return view('categories.index', compact('categories'));
     }
 
     public function display()
     {
         $user = Auth::user();
-        $categories = Category::with('users')->where('user_id',$user->id)->paginate(7);
+        $categories = Category::with('users')
+            ->whereHas('users', function ($query) use ($user) {
+                $query->where('user_id',$user->id);
+            })
+
+            ->paginate(12);
         return view('categories.display', compact('categories'));
     }
 
@@ -52,6 +64,7 @@ class CategoryController extends Controller
     public function store(CategoryRequest $request)
     {
         try {
+            $user = Auth::user();
             DB::beginTransaction();
             $categoryIDs = [];
 
@@ -61,15 +74,20 @@ class CategoryController extends Controller
 
 
             if (!empty($request->new_categories)) {
+
+
                 foreach ($request->new_categories as $categoryName) {
+
                     $category = Category::withTrashed()->where('name', $categoryName)->first();
 
                     if ($category) {
                         $category->restore();
+//                        $category -> update(['user_id' => $user->id]);
                     } else {
                         $category = Category::create([
                             'name' => $categoryName,
-                            'user_id' => auth()->id()]);
+                            'user_id' => $user->id
+                        ]);
                     }
                     $categoryIDs[] = $category->id;
                 }
@@ -115,10 +133,6 @@ class CategoryController extends Controller
                     'user_id' => $user->id,    //not working
                     'date' => Carbon::now()->format('Y-m-d'),
                 ]);
-//                $newCategory = $user->categories()->create([
-//                    'name' => $newName,
-//                    'date' => Carbon::now()->format('Y-m-d'),
-//                ]);
             }
 
         }
@@ -128,48 +142,55 @@ class CategoryController extends Controller
 
         $oldCategory = Category::findOrFail($id);
 
+        Expense::where('category_id', $oldCategory->id)->update(['category_id' => $newCategory->id]);
+        $newCategory->users()->sync(
+            $oldCategory->users->mapWithKeys(function ($user) {
+                return [$user->id => [
+                    'date' => $user->pivot->date,
+                    'percentage' => $user->pivot->percentage,
+                ]];
+            })->toArray()
+        );
+        $oldCategory->users()->detach();
 
-        session()->flash('confirm_transfer', [
-            'old_category_id' => $oldCategory->id,
-            'new_category_id' => $newCategory->id,
-            'message' => 'Do you want to transfer all expenses from "' . $oldCategory->name . '" to "' . $newCategory->name . '"?',
-        ]);
         return redirect()->route('categories.display')->with('success', 'Categories updated successfully.');
 
     }
 
-    public function transfer(Request $request)
-    {
-
-        $oldCategoryId = $request->input('old_category');
-        $newCategoryId = $request->input('new_category');
-        if($request->input('transfer') == 'yes') {
-
-
-            $oldCategory = Category::find($oldCategoryId);
-            $newCategory = Category::find($newCategoryId);
-
-//            dd($oldCategory, $newCategory);
-            if (!$oldCategory || !$newCategory) {
-                return redirect()->route('categories.display')->with('error', 'Invalid category selection.');
-            }
-
-            Expense::where('category_id', $oldCategoryId)->update(['category_id' => $newCategoryId]);
-            Category::findOrFail($oldCategoryId)->delete();
-            return redirect()->route('categories.display')->with('success', 'Categories transferred successfully.');
-        }
-        Category::findOrFail($oldCategoryId)->delete();
-        return redirect()->route('categories.display')->with('success', 'Categories were not transferred successfully.');
-    }
+//    public function transfer(Request $request)
+//    {
+//
+//        $oldCategoryId = $request->input('old_category');
+//        $newCategoryId = $request->input('new_category');
+//        if($request->input('transfer') == 'yes') {
+//
+//
+////            $oldCategory = Category::find($oldCategoryId);
+////            $newCategory = Category::find($newCategoryId);
+////
+//////            dd($oldCategory, $newCategory);
+////
+//
+//
+////            Category::findOrFail($oldCategoryId)->delete();
+//            Category::where('id', $oldCategoryId)->update(['user_id' => '']);
+//            return redirect()->route('categories.display')->with('success', 'Categories transferred successfully.');
+//        }
+////        Category::findOrFail($oldCategoryId)->delete();
+//        Category::where('id', $oldCategoryId)->update(['user_id' => '']);
+//        return redirect()->route('categories.display')->with('success', 'Categories were not transferred successfully.');
+//    }
 
 
 
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, Category $category)
+    public function show(DateDurationRequest $request, Category $category)
     {
         $selectedDate =$request->input('month',now()->month);
+        $start =$request->input('start',now()->startOfYear()->format('Y-m-d'));
+        $end =$request->input('end',now()->endOfYear()->format('Y-m-d'));
 //
 //        $users = User::wherehas('categories', function ($query) use ($category) {
 //            $query->where('category_user.category_id', $category->id);
@@ -179,9 +200,11 @@ class CategoryController extends Controller
 //        return view('admin.userCategory', compact('category', 'users', 'userCount'));
 
         $expenses =Expense::where('category_id',$category->id)
-            ->where('user_id', auth()->id())->whereMonth('date',$selectedDate)->get();
+            ->where('user_id', auth()->id())
+           ->whereBetween('date', [$start, $end])
+            ->paginate(5);
 
-        return view('categories.show', compact('category','expenses','selectedDate'));
+        return view('categories.show', compact('category','expenses','start','end'));
     }
 
 
@@ -190,7 +213,12 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        $category->delete();
+        $user = Auth::user();
+        if ($user->hasAdminRole()) {
+            $category->delete();
+        }else{
+            $category->users()->detach();
+        }
         return redirect()->back()->with('success', 'Category deleted successfully.');
     }
 
@@ -202,14 +230,19 @@ class CategoryController extends Controller
         })->count();
 
         if ($check == 0) {
-            $categories = Category::with('users')
-                ->get();
+            $categories = Category::withSum('expenses', 'amount')
+                ->orderBy('expenses_sum_amount', 'desc')
+                ->where('disabled','no')
+                ->limit(6)->get();
+
         }else{
-            $categories = Category::whereDoesntHave('users', function ($query) {
+            $categories = Category::withSum('expenses', 'amount')
+                ->orderBy('expenses_sum_amount', 'desc')
+                ->whereDoesntHave('users', function ($query) {
                 $query->whereYear('category_user.date', carbon::now()->year)
                     ->whereMonth('category_user.date', carbon::now()->month)
                     ->where('category_user.user_id', Auth::id());
-            })->get();
+            })->where('disabled','no')->limit(6)->get();
         }
         return view('categories.new-category', compact('categories'));
     }
@@ -264,8 +297,21 @@ class CategoryController extends Controller
             return redirect()->back()->with('success', 'User category deleted successfully.');
         }
 
-        // If category_id is empty or not provided
+
         return redirect()->back()->with('error', 'Category ID is required.');
+    }
+
+    public function disable(Request $request, Category $category)
+    {
+        $disable=$request->input('disable');
+        if ($disable == 'Yes') {
+            $category->update(['disabled' => 'yes']);
+            return redirect()->back()->with('success', 'Category disabled successfully.');
+        }else{
+            $category->update(['disabled' => 'no']);
+            return redirect()->back()->with('success', 'Category removed from disabled successfully.');
+        }
+
     }
 
 

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Http\Requests\DateDurationRequest;
 use App\Http\Requests\IncomeRequest;
 use App\Models\Budget;
 use App\Models\Category;
@@ -16,31 +18,46 @@ class ExpenseController extends Controller
 
 
 
-    public function index(Request $request)
+    public function index(DateDurationRequest $request)
     {
 
+
         $user = auth()->user();
-        $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());
-        $end=$request->input('end',Carbon::now()->endOfMonth()->toDateString());
+        $start=$request->input('start',Carbon::now()->startOfYear()->toDateString());
+        $end=$request->input('end',Carbon::now()->endOfYear()->toDateString());
+        $search=$request->input('inputText');
+        $category=$request->input('category');
+//        dd($category);
         $selectedMonth = $request->input('month', now()->month);
+
+//        dd($category->id);
 
 
         $expenses = Expense::where('user_id', $user->id)
-            ->whereMonth('date', (int)$selectedMonth)
-            ->whereHas('category', function ($query) {
-                $query->withTrashed();
+            ->whereBetween('date', [$start, $end])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('description', 'like', '%' . $search . '%')
+                        ->orWhere('amount', 'like', '%' . $search . '%')
+                        ->whereHas('category', function ($query) use ($search) {
+                            $query->withTrashed()
+                                ->where('name', 'LIKE', "%{$search}%");
+                        });
+                });
+
             })
+            ->when($category, function ($query, $category) {
+                $query->where('category_id', $category);
+            })
+
             ->orderBy('date', 'DESC')
-            ->paginate(4);
+            ->paginate(9);
 
-        $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
-            $query
-                ->where('user_id', $user->id);
-        })
-            ->withTrashed()
-            ->get();
+        $categories = Category::whereHas('expenses', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->withTrashed()->get();
 
-        return view('expenses.index', compact('categories', 'expenses', 'selectedMonth'));
+        return view('expenses.index', compact('categories', 'expenses', 'start','end','search'));
     }
 
     /**
@@ -161,7 +178,7 @@ class ExpenseController extends Controller
                 });
         })
             ->orderBy('date', 'DESC')
-            ->paginate(5);
+            ->paginate(2);
 
         $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
             $query->whereMonth('date', $selectedMonth)

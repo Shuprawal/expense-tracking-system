@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CategoryRequest extends FormRequest
@@ -27,7 +28,13 @@ class CategoryRequest extends FormRequest
             'categories' => 'nullable|array',
             'categories.*' => 'string|exists:categories,name',
             'new_categories' => 'nullable|array',
-            'new_categories.*' => 'string|distinct|required_without:categories|min:1',
+            'new_categories.*' => ['string','distinct','required_without:categories','min:1',
+                function ($attribute, $value, $fail) {
+                    if (Category::where('disabled','yes')->where('name', $value)->exists()) {
+                        $fail("Category '{$value}' is disabled.");
+                    }
+                }
+                ],
             'date' => ['required', 'date'],
         ];
     }
