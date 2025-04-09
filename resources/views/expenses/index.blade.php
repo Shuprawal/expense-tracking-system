@@ -1,7 +1,5 @@
 
 <x-app-layout>
-{{--    @dd($start,$end)--}}
-{{--    @dd($search)--}}
 
     <div class="container my-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -28,8 +26,9 @@
                </ul>
 
             </div>
-            <x-search :route="'expenses.index'"/>
             <x-date-duration :route="'expenses.index'" :parameters="[]" />
+            <x-search :route="'expenses.index'"/>
+
         </div>
 
 {{--        <h3 class="text-secondary">Expenses for {{ \Carbon\Carbon::create()->month((int)$selectedMonth)->format('F') }}:</h3>--}}

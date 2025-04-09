@@ -118,6 +118,7 @@ class ExpenseController extends Controller
      */
     public function edit(Expense $expense)
     {
+       abort_if($expense->user_id != auth()->id(), 403);
         $categories = Category::with('users')
             ->whereHas('users', function ($query) {
                 $query->where('users.id', auth()->id())

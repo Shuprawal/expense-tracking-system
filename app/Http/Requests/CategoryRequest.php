@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use App\Models\Category;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
+
 
 class CategoryRequest extends FormRequest
 {
@@ -28,7 +30,7 @@ class CategoryRequest extends FormRequest
             'categories' => 'nullable|array',
             'categories.*' => 'string|exists:categories,name',
             'new_categories' => 'nullable|array',
-            'new_categories.*' => ['string','distinct','required_without:categories','min:1',
+            'new_categories.*' => ['distinct','required_without:categories',
                 function ($attribute, $value, $fail) {
                     if (Category::where('disabled','yes')->where('name', $value)->exists()) {
                         $fail("Category '{$value}' is disabled.");
@@ -46,6 +48,29 @@ class CategoryRequest extends FormRequest
             'new_categories.*.distinct' => 'Duplicate new categories are not allowed.',
             'new_categories.*.required_without' => 'If no category is selected, you must enter at least one new category.',
         ];
+    }
+
+
+
+    public function withValidator(Validator $validator)
+    {
+        $validator->after(function ($validator) {
+            $existing = $this->input('categories', []);
+            $new = $this->input('new_categories', []);
+
+            $normalizedExisting = array_map(function ($v) {
+                return strtolower(trim($v));
+            }, $existing);
+
+            foreach ($new as $item) {
+                if (!is_string($item)) continue;
+
+                $normalized = strtolower(trim($item));
+                if (in_array($normalized, $normalizedExisting)) {
+                    $validator->errors()->add('error1', "The new category '{$item}' is already selected.");
+                }
+            }
+        });
     }
 
 

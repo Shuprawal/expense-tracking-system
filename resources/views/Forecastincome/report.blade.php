@@ -32,8 +32,14 @@
                             <tr >
                                 <td>{{$expense['name']}}</td>
                                 <td>{{$expense['percentage']}}%
-{{--                                    <a href="{{route('forecasts.edit',$income->id)}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>--}}
+{{--                                    <a href="{{route('forecasts.edit',$expense['percentage'])}}" class="btn btn-primary"><i class="bi bi-pen-fill"></i></a>--}}
+{{--                                    <a href="{{route('category.forecast.edit',$expense['category_id'])}}" class="btn btn-outline-dark"><i class="bi bi-pen-fill"></i></a>--}}
 
+                                    <form action="{{route('category.forecast.edit',$expense['category_id'])}}" method="get">
+                                        <input type="hidden" name="date" value="{{$selectedMonth}}">
+                                        <input type="hidden" name="category_id" value="{{$expense['category_id']}}">
+                                        <button type="submit" class="btn btn-outline-dark"><i class="bi bi-pen-fill"></i></button>
+                                    </form>
                                 </td>
                                 <td>
                                     {{$expense['amount']}}

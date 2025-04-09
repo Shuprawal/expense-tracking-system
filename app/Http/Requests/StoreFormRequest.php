@@ -38,11 +38,16 @@ class StoreFormRequest extends FormRequest
     }
     public function withValidator($validator)
     {
+
         $validator->after(function ($validator) {
+            $selectedDate = session('categoryDate');
+            $start=Carbon::parse($selectedDate)->startOfMonth();
+            $end=Carbon::parse($selectedDate)->endOfMonth();
             $user = auth()->user();
             $exitingPercentage = $user->categories()
-                ->whereMonth('category_user.date',Carbon::now()->month)
-                ->whereYear('category_user.date',Carbon::now()->year)
+                ->whereBetween('category_user.date', [$start, $end])
+//                ->whereMonth('category_user.date',Carbon::now()->month)
+//                ->whereYear('category_user.date',Carbon::now()->year)
                 ->sum('category_user.percentage');
             $percentages = $this->input('percentage', []);
             if (!is_array($percentages)) {

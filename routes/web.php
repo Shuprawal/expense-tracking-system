@@ -28,6 +28,8 @@ Route::middleware(['auth'])->group(function () {
 //    Route::post('categories/transfer', [CategoryController::class, 'transfer'])->name('categories.transfer');
     Route::resource('categories',CategoryController::class)->except('show');
     Route::get('categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
+    Route::get('category/forecast/edit/{category}', [CategoryController::class, 'forecastEdit'])->name('category.forecast.edit');
+    Route::post('category/forecast/edit}', [CategoryController::class, 'forecastUpdate'])->name('forecastUpdate.percentage');
 
     Route::resource('incomes',IncomeController::class);
 

@@ -104,6 +104,7 @@ class ForecastincomeController extends Controller
      */
     public function edit(ForecastincomeController $forecastincome)
     {
+
         $income = Forecastincome::where('user_id',auth()->id())->first();
         return view('forecastincome.edit',compact('income'));
     }
@@ -133,14 +134,17 @@ class ForecastincomeController extends Controller
 
         $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
         $user = auth()->user();
-        $start= $selectedDate->copy()->startOfMonth()->toDateString();
-        $end=$selectedDate->copy()->endOfMonth()->toDateString();
-        $startNext= $selectedDate->copy()->startOfMonth()->addMonth(1)->toDateString();
-        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
+//        $start= $selectedDate->copy()->startOfMonth()->toDateString();
+//        $end=$selectedDate->copy()->endOfMonth()->toDateString();
+//        $startNext= $selectedDate->copy()->startOfMonth()->addMonth(1)->toDateString();
+//        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
+
+        $nextMonthSelected = $selectedMonth == Carbon::now()->addMonth()->month;
+
+        $isMonth= $nextMonthSelected ? Carbon::now()->month : $selectedMonth;
 
         $income = Forecastincome::where('user_id', $user->id)
-            ->whereBetween('date', [$start, $end])
-
+            ->whereMonth('date', $isMonth)
             ->sum('amount');
         if (!$income && $selectedDate < Carbon::now()) {
             return redirect()->route('incomes.create');
@@ -148,46 +152,31 @@ class ForecastincomeController extends Controller
             $totalIncome = $income;
         }
 
-        if ($selectedMonth == Carbon::now()->addMonth(1)->month || $selectedMonth == Carbon::now()->month) {
-            $categories = $user->categories()
-                ->whereHas('users', function ($query) use ($selectedMonth) {
-                    $query->where('user_id', auth()->id())
-                    ->whereMonth('category_user.date', Carbon::now()->month);
-                })
-                ->withPivot('percentage', 'date')->withTrashed()
-                ->get()
-                ->unique('id');
-
-        }else{
-            $categories = $user->categories()
-                ->whereHas('users', function ($query) use ($selectedMonth) {
-                    $query->where('user_id', auth()->id())
-                        ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth));
-                })
-            ->withPivot('percentage', 'date')
+        $categories = $user->categories()
+            ->whereHas('users', function ($query) use ($isMonth) {
+                $query->where('user_id', auth()->id())
+                    ->whereMonth('category_user.date', $isMonth);
+            })
+            ->withPivot('percentage', 'date')->withTrashed()
             ->get()
             ->unique('id');
-        }
 
         $expenses = [];
         foreach ($categories as $category) {
 
-            if ($selectedMonth == Carbon::now()->addMonth()->month ) {
-
-                $pivot = $category->users()
-                    ->wherePivot('user_id', $user->id)
-//                    ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth))
-                    ->whereMonth('category_user.date', Carbon::now()->month)
-                    ->withPivot('percentage')
-                    ->first();
-
-            }else{
-                $pivot = $category->users()
-                    ->wherePivot('user_id', $user->id)
-                    ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth))
-                    ->withPivot('percentage')
-                    ->first();
-            }
+            $pivot = $category->users()
+                ->wherePivot('user_id', $user->id)
+                ->whereMonth('category_user.date', $isMonth)
+                ->withPivot('percentage')
+                ->first();
+//            if ($selectedMonth == Carbon::now()->addMonth()->month ) {
+//                $pivot= $category->users()->whereMonth('category_user.date', Carbon::now()->month) ->first();;
+//
+//
+//            }else{
+//                $pivot= $category->users()->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth)) ->first();;
+//
+//            }
 
             $percentage = $pivot?->pivot->percentage ?? 0;
             $amount = ($percentage / 100) * $totalIncome;
@@ -197,12 +186,18 @@ class ForecastincomeController extends Controller
 
                 $spended = Expense::where('user_id', $user->id)
                     ->where('category_id', $category->id)
-                    ->whereMonth('date', $selectedMonth-1 )
+                    ->whereMonth('date', $isMonth)
                     ->get();
 
+
+
+//                dd($spended->amount);
                 $totalExpense = $spended->sum('amount');
-                $spendPercentage = round($totalExpense / $totalIncome * 100, 2);
-                $forecastPercentage = round(($percentage + $spendPercentage) / 2, 2);
+//                dd($totalIncome);
+                $spendPercentage = round(($totalExpense / $totalIncome) * 100, 2);
+//                dd($percentage,$spendPercentage);
+                $sumPercentage = round($percentage + $spendPercentage);
+                $forecastPercentage = round($sumPercentage / 2, 2);
                 $amount = ($forecastPercentage / 100) * $totalIncome;
                 $expenses[] = [
                     'name' => $category->name,
@@ -219,9 +214,13 @@ class ForecastincomeController extends Controller
 
                 $spended = Expense::where('user_id', $user->id)
                     ->where('category_id', $category->id)
-                    ->whereMonth('date', $selectedMonth)
+                    ->whereMonth('date', $isMonth)
                     ->get();
+
+//                dd($spended);
                 $totalExpense = $spended->sum('amount');
+//                dd($totalExpense);
+//                dd($totalExpense);
                 $remaining = $amount - $totalExpense;
                 $spendPercentage = round($totalExpense / $totalIncome * 100, 2);
 
@@ -239,119 +238,7 @@ class ForecastincomeController extends Controller
 
         return view('forecastincome.report', compact('expenses', 'totalIncome', 'income', 'selectedMonth'));
     }
-// public function report(Request $request)
-//    {
-//        $selectedMonth = $request->input('month', now()->month);
-//        $selectedYear = $request->input('year', now()->year);
-//
-//        $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
-//        $user = auth()->user();
-//        $start= $selectedDate->copy()->startOfMonth()->toDateString();
-//        $end=$selectedDate->copy()->endOfMonth()->toDateString();
-//        $startNext= $selectedDate->copy()->startOfMonth()->addMonth(1)->toDateString();
-//        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
-//
-//        $income = Forecastincome::where('user_id', $user->id)
-//            ->whereBetween('date', [$start, $end])
-//
-//            ->sum('amount');
-//        if (!$income) {
-//            return redirect()->route('incomes.create');
-//        } else {
-//            $totalIncome = $income;
-//        }
-//
-//        if ($selectedMonth == Carbon::now()->addMonth(1)->month || $selectedMonth == Carbon::now()->month) {
-//            $categories = $user->categories()
-//                ->whereHas('users', function ($query) use ($selectedMonth) {
-//                    $query->where('user_id', auth()->id())
-//                    ->whereMonth('category_user.date', Carbon::now()->month);
-//                })
-//                ->withPivot('percentage', 'date')->withTrashed()
-//                ->get()
-//                ->unique('id');
-//
-//        }else{
-//            $categories = $user->categories()
-//                ->whereHas('users', function ($query) use ($selectedMonth) {
-//                    $query->where('user_id', auth()->id())
-//                        ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth));
-//                })
-//            ->withPivot('percentage', 'date')
-//            ->get()
-//            ->unique('id');
-//        }
-//
-//        $expenses = [];
-//        foreach ($categories as $category) {
-//
-//            if ($selectedMonth == Carbon::now()->addMonth()->month ) {
-//
-//                $pivot = $category->users()
-//                    ->wherePivot('user_id', $user->id)
-////                    ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth))
-//                    ->whereMonth('category_user.date', Carbon::now()->month)
-//                    ->withPivot('percentage')
-//                    ->first();
-//
-//            }else{
-//                $pivot = $category->users()
-//                    ->wherePivot('user_id', $user->id)
-//                    ->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth))
-//                    ->withPivot('percentage')
-//                    ->first();
-//            }
-//
-//            $percentage = $pivot?->pivot->percentage ?? 0;
-//            $amount = ($percentage / 100) * $totalIncome;
-//
-//            if ($selectedMonth == Carbon::now()->addMonth(1)->month) {
-//
-//
-//                $spended = Expense::where('user_id', $user->id)
-//                    ->where('category_id', $category->id)
-//                    ->whereMonth('date', $selectedMonth-1 )
-//                    ->get();
-//
-//                $totalExpense = $spended->sum('amount');
-//                $spendPercentage = round($totalExpense / $totalIncome * 100, 2);
-//                $forecastPercentage = round(($percentage + $spendPercentage) / 2, 2);
-//                $amount = ($forecastPercentage / 100) * $totalIncome;
-//                $expenses[] = [
-//                    'name' => $category->name,
-//                    'percentage' => $forecastPercentage,
-//                    'amount' => $amount,
-//                    'spend' => 0,
-//                    'spendPercentage' => 0,
-//                    'remaining' => 0,
-//                    'category_id' => $category->id,
-//
-//                ];
-//
-//            } else {
-//
-//                $spended = Expense::where('user_id', $user->id)
-//                    ->where('category_id', $category->id)
-//                    ->whereMonth('date', $selectedMonth)
-//                    ->get();
-//                $totalExpense = $spended->sum('amount');
-//                $remaining = $amount - $totalExpense;
-//                $spendPercentage = round($totalExpense / $totalIncome * 100, 2);
-//
-//                $expenses[] = [
-//                    'name' => $category->name,
-//                    'percentage' => $percentage,
-//                    'amount' => $amount,
-//                    'spend' => $totalExpense,
-//                    'spendPercentage' => $spendPercentage,
-//                    'remaining' => $remaining,
-//                    'category_id' => $category->id,
-//                ];
-//            }
-//        }
-//
-//        return view('forecastincome.report', compact('expenses', 'totalIncome', 'income', 'selectedMonth'));
-//    }
+
 
 
 

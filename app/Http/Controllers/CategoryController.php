@@ -46,7 +46,15 @@ class CategoryController extends Controller
 
     public function edit($id)
     {
+        $user = Auth::user();
         $category = Category::findOrFail($id);
+        $authorize= Category::whereHas('users', function ($query) use ($id,$user) {
+            $query->where('user_id',$user->id)
+                ->where('category_id',$id);
+        })->first();
+        if(!$authorize){
+            abort(403);
+        }
         return view('categories.edit', compact('category'));
     }
 
@@ -63,58 +71,98 @@ class CategoryController extends Controller
 
     public function store(CategoryRequest $request)
     {
-        try {
+//        dd($request->all());
+        $start= Carbon::parse($request->date)->startOfMonth();
+        $end= Carbon::parse($request->date)->endOfMonth();
+//        $end=$request->date->startOfMonth();
+//        dd($start);
+
+
             $user = Auth::user();
-            DB::beginTransaction();
             $categoryIDs = [];
 
+
             if (!empty($request->categories)) {
+
+                foreach ($request->categories as $category) {
+                    $existingCategory = Category::where('name', $category)
+                        ->whereHas('users', function ($query) use ($user,$start,$end) {
+                            $query->where('user_id',$user->id)
+                                ->whereBetween('date',[$start,$end]);
+                        })->exists();
+
+                    if ($existingCategory){
+                        return back()->withInput()->withErrors(['error1' => 'Category already exists for this month!']);
+                    }
+                }
+
                 $categoryIDs = Category::whereIn('name', $request->categories)->pluck('id')->toArray();
             }
 
-
+        try {
             if (!empty($request->new_categories)) {
-
-
                 foreach ($request->new_categories as $categoryName) {
+//                    if ($request->categories == $categoryName) {
+//                        dd('aaaa');
+//                    }
+//                    dd($request->categories, $categoryName);
 
-                    $category = Category::withTrashed()->where('name', $categoryName)->first();
+                    $existingCategory = Category::where('name', $categoryName)
+                        ->whereHas('users', function ($query) use ($user,$start,$end) {
+                        $query->where('user_id',$user->id)
+                            ->whereBetween('date',[$start,$end]);
+                    })->exists();
 
-                    if ($category) {
-                        $category->restore();
-//                        $category -> update(['user_id' => $user->id]);
-                    } else {
-                        $category = Category::create([
-                            'name' => $categoryName,
-                            'user_id' => $user->id
-                        ]);
+                    if ($existingCategory){
+                        return back()->withInput()->withErrors(['error1' => 'Category already exists for this month!']);
                     }
-                    $categoryIDs[] = $category->id;
+                    $category = Category::withTrashed()->where('name', $categoryName)->first();
+                    DB::beginTransaction();
+
+                    if ($categoryName != []) {
+
+                        if ($category) {
+//                            dd($category);
+                            $category->restore();
+//                        $category -> update(['user_id' => $user->id]);
+                        } else {
+                            $category = Category::create([
+                                'name' => ucfirst($categoryName),
+                                'user_id' => $user->id
+                            ]);
+                        }
+
+                        $categoryIDs[] = $category->id;
+                    }
+
                 }
             }
 
-
             if (!empty($categoryIDs)) {
-                auth()->user()->categories()->attach($categoryIDs, ['date' => $request->date]);
-                session(['categoryDate' => $request->date]);
+                $date=$request->date;
+                $dateTime = Carbon::parse($date)->setTimeFrom(Carbon::now());
+
+                auth()->user()->categories()->attach($categoryIDs, ['date' => $dateTime]);
+                session(['categoryDate' => $dateTime]);
             }
 
             DB::commit();
             return redirect()->route('forecast')->with('success', 'Categories added successfully.');
         } catch (\Throwable $th) {
             DB::rollBack();
-            return back()->with('error', $th->getMessage());
+            return back()->withInput()->with('error', $th->getMessage());
         }
     }
     public function update(Request $request, $id)
     {
+//        dd($request);
         $request->validate([
             'name' => 'required|string',
         ]);
         $newName = $request->get('name');
         $user = Auth::user();
 
-        $categoryTrashed = Category::onlyTrashed()->where('name', $newName)->first();
+        $categoryTrashed = Category::withTrashed()->where('name', $newName)->first();
 
         if ($categoryTrashed) {
             $categoryTrashed->restore();
@@ -129,7 +177,7 @@ class CategoryController extends Controller
                 $newCategory = $existingCategory;
             }else{
                 $newCategory= Category::create([
-                    'name' => $newName,
+                    'name' => ucfirst($newName),
                     'user_id' => $user->id,    //not working
                     'date' => Carbon::now()->format('Y-m-d'),
                 ]);
@@ -244,7 +292,21 @@ class CategoryController extends Controller
                     ->where('category_user.user_id', Auth::id());
             })->where('disabled','no')->limit(6)->get();
         }
+
         return view('categories.new-category', compact('categories'));
+    }
+
+    public function disable(Request $request, Category $category)
+    {
+        $disable=$request->input('disable');
+        if ($disable == 'Yes') {
+            $category->update(['disabled' => 'yes']);
+            return redirect()->back()->with('success', 'Category disabled successfully.');
+        }else{
+            $category->update(['disabled' => 'no']);
+            return redirect()->back()->with('success', 'Category removed from disabled successfully.');
+        }
+
     }
 
     public function forecast()
@@ -253,7 +315,7 @@ class CategoryController extends Controller
         $categories = Category::with('users')
 
             ->whereHas('users', function ($query) {
-                    $query->whereDate('category_user.date',session('categoryDate'))
+                    $query->where('category_user.date',session('categoryDate'))
                     ->where('users.id', auth()->id());
             })
             ->get();
@@ -301,19 +363,43 @@ class CategoryController extends Controller
         return redirect()->back()->with('error', 'Category ID is required.');
     }
 
-    public function disable(Request $request, Category $category)
+
+    public function forecastEdit(Request $request)
     {
-        $disable=$request->input('disable');
-        if ($disable == 'Yes') {
-            $category->update(['disabled' => 'yes']);
-            return redirect()->back()->with('success', 'Category disabled successfully.');
-        }else{
-            $category->update(['disabled' => 'no']);
-            return redirect()->back()->with('success', 'Category removed from disabled successfully.');
-        }
+//        dd($request->all());
+        $month=$request->date;
+        $year = Carbon::now()->year;
+
+        $start= Carbon::createFromDate($year, $month,1);
+
+//        dd($date);
+//        $start = Carbon::create($date)->startOfMonth();
+        $end = Carbon::create($start)->endOfMonth();
+//        dd($date, $end);
+        $user = Auth::user();
+        $category =$request->category_id;
+//        dd($category);
+        $categories = Category::with('users')
+            ->whereHas('users', function ($query) use ($user, $start,$end, $category) {
+                $query->where('category_id', $category)
+                        ->whereBetween('category_user.date', [$start, $end])
+                    ->where('users.id', $user->id);
+            })
+            ->first();
+
+        $userWithPivot = $categories->users->first();
+            $percentage = $userWithPivot->pivot->percentage;
+
+//            ->wherePivot('user_id', $user->id)
+//            ->whereBetween('category_user.date', [$start, $end])
+//            ->withPivot('percentage')
+//            ->first();
+//        dd($categories->percentage);
+//        dd($percentage);
+
+        return view('categories.forecastEdit', compact('categories','percentage','start','end'));
 
     }
-
 
 
 
