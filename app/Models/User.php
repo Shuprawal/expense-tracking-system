@@ -53,7 +53,7 @@ class User extends Authenticatable
     }
     public function categories()
     {
-        return $this->belongsToMany(Category::class)->withPivot('percentage','date')->distinct();
+        return $this->belongsToMany(Category::class)->withPivot('percentage','date');
     }
 
     public function expenses()

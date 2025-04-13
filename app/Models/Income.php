@@ -21,4 +21,5 @@ class Income extends Model
     }
 
 
+
 }

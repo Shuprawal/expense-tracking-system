@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('forecastIncomes', function (Blueprint $table) {
-            $table->date('date')->nullable()->after('amount');
-            $table->text('description')->nullable()->after('date');
+//            $table->date('date')->nullable()->after('amount');
+//            $table->text('description')->nullable()->after('date');
         });
     }
 
@@ -23,8 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('forecastIncomes', function (Blueprint $table) {
-            $table->dropColumn('date');
-            $table->dropColumn('description');
+//            $table->dropColumn('date');
+//            $table->dropColumn('description');
         });
     }
 };

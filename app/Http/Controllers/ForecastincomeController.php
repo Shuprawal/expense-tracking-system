@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Forecastincome;
+use App\Models\Income;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,13 +44,15 @@ class ForecastincomeController extends Controller
     }
     public function index(Request $request)
     {
+        $search = $request->get('inputText');
         $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());
         $end=$request->input('end',Carbon::now()->endOfMonth()->toDateString());
         $user = auth()->user();
-        $incomes = Forecastincome::where('user_id',$user->id)
+        $incomes = Income::where('user_id',$user->id)
+            ->where('description','LIKE',"%{$search}%")
         ->whereBetween('date',[$start,$end])->paginate(10);
 
-        return view('forecastincome.index',compact('incomes'));
+        return view('forecastincome.index',compact('incomes','search','start','end'));
 
     }
 
@@ -68,23 +71,21 @@ class ForecastincomeController extends Controller
     {
         $user = auth()->user();
         $request->validate([
-            'amount' => 'required|numeric|min:1',
-            'date' => 'required|date',
-            'description' => 'required',
+            'amount' => 'required|numeric|min:0',
         ]);
 
-//        if($request->input('type')=="yearly"){
-//            $amount = $request->input('amount') / 12;
-//        }else{
-//            $amount = $request->input('amount');
-//        }
+        if($request->input('type')=="yearly"){
+            $amount = $request->input('amount') / 12;
+        }else{
+            $amount = $request->input('amount');
+        }
+
         $amount = $request->input('amount');
         try {
             DB::beginTransaction();
             $forecastIncome =  $user-> forecastexpenses()-> create([
                     'amount'=>$amount,
-                    'date'=>$request->input('date'),
-                    'description'=>$request->input('description'),
+
                 ]);
                 $forecastIncome->statements()->create([
                     'amount'=>$amount,
@@ -115,7 +116,7 @@ class ForecastincomeController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:1',
+            'amount' => 'required|numeric|min:0',
         ]);
         $forcast = Forecastincome::where('id',$id)->first();
 
@@ -129,6 +130,7 @@ class ForecastincomeController extends Controller
 
     public function report(Request $request)
     {
+        $expenses = [];
         $selectedMonth = $request->input('month', now()->month);
         $selectedYear = $request->input('year', now()->year);
 
@@ -140,17 +142,37 @@ class ForecastincomeController extends Controller
 //        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
 
         $nextMonthSelected = $selectedMonth == Carbon::now()->addMonth()->month;
+        $upComingMonths =$selectedMonth > Carbon::now()->month;
 
         $isMonth= $nextMonthSelected ? Carbon::now()->month : $selectedMonth;
 
-        $income = Forecastincome::where('user_id', $user->id)
-            ->whereMonth('date', $isMonth)
+        $income = Income::where('user_id', $user->id)
+            ->whereMonth('date', $selectedMonth)
             ->sum('amount');
-        if (!$income && $selectedDate < Carbon::now()) {
-            return redirect()->route('incomes.create');
+
+        if (!$income) {
+            $forecastIncome=Forecastincome::where('user_id',$user->id)
+//                ->whereMonth('date', $isMonth)
+                ->sum('amount');
+
+            if (!$forecastIncome){
+                return redirect()->route('forecasts.create');
+            }else{
+                $incomeSource='forecastIncome';
+//                $expense['totalIncome']='aaa';
+                $totalIncome = $forecastIncome;
+            }
+
         } else {
+            $incomeSource='income';
             $totalIncome = $income;
         }
+
+//        if (!$income && $selectedDate < Carbon::now()) {
+//            return redirect()->route('incomes.create');
+//        } else {
+//            $totalIncome = $income;
+//        }
 
         $categories = $user->categories()
             ->whereHas('users', function ($query) use ($isMonth) {
@@ -161,7 +183,7 @@ class ForecastincomeController extends Controller
             ->get()
             ->unique('id');
 
-        $expenses = [];
+
         foreach ($categories as $category) {
 
             $pivot = $category->users()
@@ -236,7 +258,7 @@ class ForecastincomeController extends Controller
             }
         }
 
-        return view('forecastincome.report', compact('expenses', 'totalIncome', 'income', 'selectedMonth'));
+        return view('forecastincome.report', compact('expenses', 'totalIncome', 'income', 'selectedMonth','incomeSource'));
     }
 
 

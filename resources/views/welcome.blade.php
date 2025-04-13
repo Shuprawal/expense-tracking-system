@@ -71,7 +71,7 @@
 <section class="py-24 text-center bg-gradient-to-br from-red-600 to-pink-500 text-white">
     <div class="max-w-4xl mx-auto px-6">
         <a href="{{ route('register') }}" class="px-6 py-3 bg-white text-black font-semibold rounded-lg shadow hover:bg-gray-100 transition">
-            Get Started for Free
+            Get Started
         </a>
     </div>
 </section>

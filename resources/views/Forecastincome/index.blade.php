@@ -3,13 +3,35 @@
     <div class="container my-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="fw-bold text-primary">Income</h1>
-            <a href="{{ route('incomes.create') }}" class="btn btn-lg btn-success shadow">+ Add Income</a>
+            <a href="{{ route('incomes.create') }}" class="btn btn-lg btn-outline-dark shadow">+ Add Income</a>
         </div>
 
         <div class="d-flex flex-wrap gap-3 mb-4">
 
-            <x-search :route="'expenses.search'"/>
-            <x-date-duration :route="'forecasts.index'" :parameters="[]" />
+            <x-search :route="'forecasts.index'"
+            :parameters="[
+                'inputText'=>request('inputText'),
+                'start'=>request('start'),
+                'end'=>request('end')
+            ]"
+            />
+{{--            @php--}}
+{{--                $filteredParameters = array_filter([--}}
+{{--                    'inputText' => request('inputText'),--}}
+{{--                    'start' => request('start'),--}}
+{{--                    'end' => request('end'),--}}
+{{--                    --}}
+{{--                ], fn($value) => filled($value));--}}
+{{--            @endphp--}}
+
+
+{{--            <x-search :route="'forecasts.index'" :parameters="$filteredParameters" />--}}
+            <x-date-duration :route="'forecasts.index'" :parameters="[
+                'search'=>$search,
+//                'start'=>request('start'),
+//                'end'=>request('end')
+
+            ]" />
         </div>
 
 
@@ -25,8 +47,8 @@
                             <p class="fw-bold text-primary">${{ number_format($income->amount, 2) }}</p>
                             <p class="text-muted">{{ $income->description }}</p>
                             <div class="d-flex justify-content-between mt-3">
-                                <x-delete-button :route="'expenses.destroy'" :parameters="$income->id" />
-                                <a href="{{ route('expenses.edit', $income->id) }}" class="btn btn-outline-dark btn-sm">Edit</a>
+                                <x-delete-button :route="'incomes.destroy'" :parameters="$income->id" />
+                                <a href="{{ route('incomes.edit', $income->id) }}" class="btn btn-outline-dark btn-sm">Edit</a>
                             </div>
                         </div>
                     </div>

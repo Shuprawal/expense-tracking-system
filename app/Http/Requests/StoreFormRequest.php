@@ -24,7 +24,9 @@ class StoreFormRequest extends FormRequest
     {
         return [
            'category' => ['required', 'array'],
+//           'category' => ['required'],
             'percentage' => ['required', 'array'],
+//            'percentage' => ['required'],
             'percentage.*' => ['integer', 'min:0', 'max:100'],
         ];
     }
@@ -46,8 +48,6 @@ class StoreFormRequest extends FormRequest
             $user = auth()->user();
             $exitingPercentage = $user->categories()
                 ->whereBetween('category_user.date', [$start, $end])
-//                ->whereMonth('category_user.date',Carbon::now()->month)
-//                ->whereYear('category_user.date',Carbon::now()->year)
                 ->sum('category_user.percentage');
             $percentages = $this->input('percentage', []);
             if (!is_array($percentages)) {

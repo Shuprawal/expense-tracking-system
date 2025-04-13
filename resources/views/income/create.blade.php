@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="m-4 p-4">
         <h1>Create Income</h1>
-        <form action="{{ route('forecasts.store') }}" method="POST">
+        <form action="{{ route('incomes.store') }}" method="POST">
             @csrf
 
            <div class="mb-3">

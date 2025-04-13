@@ -18,47 +18,57 @@ class ExpenseController extends Controller
 
 
 
+
     public function index(DateDurationRequest $request)
     {
-
-
+//        dd($request->search);
         $user = auth()->user();
-        $start=$request->input('start',Carbon::now()->startOfYear()->toDateString());
-        $end=$request->input('end',Carbon::now()->endOfYear()->toDateString());
-        $search=$request->input('inputText');
-        $category=$request->input('category');
-//        dd($category);
-        $selectedMonth = $request->input('month', now()->month);
 
-//        dd($category->id);
+        $start = $request->input('start', Carbon::now()->startOfYear()->toDateString());
+        $end = $request->input('end', Carbon::now()->endOfYear()->toDateString());
+        $search = $request->input('inputText');
+        $category = $request->input('category');
+
+//        dd($search);
+        $expensesQuery = Expense::where('user_id', $user->id)
+            ->whereBetween('date', [$start, $end]);
+
+        if ($search) {
+            $expensesQuery->where(function ($subQuery) use ($search) {
+                $subQuery->where('description', 'like', '%' . $search . '%')
+                    ->orWhere('amount', 'like', '%' . $search . '%')
+                    ->orWhereHas('category', function ($query) use ($search) {
+                        $query->withTrashed()->where('name', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
 
 
-        $expenses = Expense::where('user_id', $user->id)
-            ->whereBetween('date', [$start, $end])
-            ->when($search, function ($query, $search) {
-                $query->where(function ($subQuery) use ($search) {
-                    $subQuery->where('description', 'like', '%' . $search . '%')
-                        ->orWhere('amount', 'like', '%' . $search . '%')
-                        ->whereHas('category', function ($query) use ($search) {
-                            $query->withTrashed()
-                                ->where('name', 'LIKE', "%{$search}%");
-                        });
-                });
+        if ($category) {
+            $expensesQuery->where('category_id', $category);
+        }
 
-            })
-            ->when($category, function ($query, $category) {
-                $query->where('category_id', $category);
-            })
-
-            ->orderBy('date', 'DESC')
-            ->paginate(9);
+        $expenses = $expensesQuery->orderBy('date', 'DESC')
+            ->paginate(9)
+            ->appends([
+                'start' => $start,
+                'end' => $end,
+                'inputText' => $search,
+                'category' => $category,
+            ]);
 
         $categories = Category::whereHas('expenses', function ($query) use ($user) {
             $query->where('user_id', $user->id);
         })->withTrashed()->get();
 
-        return view('expenses.index', compact('categories', 'expenses', 'start','end','search'));
+
+        $selectedCategoryName = $categories->firstWhere('id', $category)?->name;
+
+        return view('expenses.index', compact(
+            'categories', 'expenses', 'start', 'end', 'search', 'selectedCategoryName'
+        ));
     }
+
 
     /**
      * Show the form for creating a new resource.
