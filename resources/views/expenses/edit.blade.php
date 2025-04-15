@@ -34,7 +34,7 @@
 
 
                 <select class="form-select" aria-label="Default select example" name="category_id">
-                    @foreach($categories as $category)
+                    @foreach($allCategory as $category)
                         <option value="{{ $category->id }}"
                             {{ $expense->category_id == $category->id ? 'selected' : '' }}>
                             {{ $category->name }}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\DateDurationRequest;
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\Forecastincome;
@@ -42,7 +43,7 @@ class ForecastincomeController extends Controller
         return view('forecastincome.display',compact('expenses','totalIncome','income'));
 
     }
-    public function index(Request $request)
+    public function index(DateDurationRequest $request)
     {
         $search = $request->get('inputText');
         $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());

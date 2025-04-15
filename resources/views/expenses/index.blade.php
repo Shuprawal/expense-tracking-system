@@ -112,7 +112,7 @@
         const filterBody = document.getElementById('filterContains');
         // const filterClose = document.getElementById('closeFilter');
 
-        const hasFilters = '{{ request('inputText') || request('category') || request('start') || request('end') ? 'true' : '' }}';
+        const hasFilters = '{{ request('inputText') || request('category') || request('start') || request('end') || request('error') ? 'true' : '' }}';
 
         if (hasFilters) {
             filterBody.style.display = "block";

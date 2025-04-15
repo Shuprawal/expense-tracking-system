@@ -29,8 +29,15 @@ class PermissionController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->permissions == null) {
+
+            return back()->with('error','please select at least one role');
+        }
         DB::beginTransaction();
         try {
+
+
+//            dd($request->all());
             $allRoles = Role::all();
             foreach ($allRoles as $role) {
                 $permissionId = $request->permissions[$role->id]??[];

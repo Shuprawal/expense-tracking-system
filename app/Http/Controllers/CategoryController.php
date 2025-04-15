@@ -249,7 +249,9 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         $user = Auth::user();
+        $users=User::all()->pluck('id')->toArray();
         if ($user->hasAdminRole()) {
+            $category->users()->detach($users);
             $category->delete();
         }else{
             $category->users()->detach();
@@ -327,6 +329,7 @@ class CategoryController extends Controller
 
 
     }
+
     public function forecastStore(StoreFormRequest $request)
     {
         $user = Auth::user();

@@ -52,7 +52,7 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-Route::middleware(['admin',
+Route::middleware(['auth','admin',
     'permission'
 ])->group(function () {
     Route::get('admin/dashboard',[UserController::class, 'dashboard'])->name('admin.dashboard');

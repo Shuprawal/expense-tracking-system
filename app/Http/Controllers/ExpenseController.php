@@ -129,13 +129,18 @@ class ExpenseController extends Controller
     public function edit(Expense $expense)
     {
        abort_if($expense->user_id != auth()->id(), 403);
-        $categories = Category::with('users')
-            ->whereHas('users', function ($query) {
-                $query->where('users.id', auth()->id())
-                    ->whereMonth('date', now()->month);
-            })
+       $existingCategory = $expense->category;
+        $categories =
+            Category::with('users')
+                ->whereHas('users', function ($query) {
+                    $query->where('users.id', auth()->id())
+                        ->whereMonth('date', now()->month);
+                })
+
             ->get();
-        return view('expenses.edit',compact('expense','categories'));
+        $allCategory=$categories->contains($existingCategory)? $categories:  $categories->push($existingCategory);
+//        dd($allCategory);
+        return view('expenses.edit',compact('expense','allCategory'));
     }
 
     /**
@@ -173,33 +178,6 @@ class ExpenseController extends Controller
         $expense->delete();
         return redirect()->route('expenses.index');
     }
-    public function search(Request $request)
-    {
-        $user = auth()->user();
-        $search = $request->input('inputText');
-        $selectedMonth = $request->input('month', now()->month);
-
 //
-        $expenses = Expense::where('user_id', $user->id)
-        ->where(function ($query) use ($search) {
-            $query->where('description', 'LIKE', "%{$search}%")
-                ->orWhere('amount', 'LIKE', "%{$search}%")
-                ->orWhereHas('category', function ($query) use ($search) {
-                    $query->where('name', 'LIKE', "%{$search}%");
-                });
-        })
-            ->orderBy('date', 'DESC')
-            ->paginate(2);
-
-        $categories = Category::whereHas('expenses', function ($query) use ($selectedMonth, $user) {
-            $query->whereMonth('date', $selectedMonth)
-                ->where('user_id', $user->id);
-        })
-            ->withTrashed()
-            ->distinct()
-            ->get();
-
-        return view('expenses.index', compact('categories', 'expenses', 'selectedMonth', 'search'));
-    }
 
 }
