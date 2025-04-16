@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Http\Requests\DateDurationRequest;
+use App\Http\Requests\ExpenseRequest;
 use App\Http\Requests\IncomeRequest;
 use App\Models\Budget;
 use App\Models\Category;
@@ -87,12 +88,16 @@ class ExpenseController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(IncomeRequest $request)
+    public function store(ExpenseRequest $request)
     {
-
+//        $aa=strlen($request->amount);
+//        $aa=strlen($request->amount);
+//        dd($aa);
+//        dd(length().;
+//        if (ob_get_length($request->amount))
         try {
             DB::beginTransaction();
-           $expense = Expense::create([
+           Expense::create([
                 'amount'=>$request->amount,
                 'description'=> $request->description,
                 'user_id'=> auth()->id(),
@@ -100,9 +105,9 @@ class ExpenseController extends Controller
                 'category_id'=> $request->category_id
             ]);
 
-           $expense->statements()->create([
-               'amount'=>$request->amount
-           ]);
+//           $expense->statements()->create([
+//               'amount'=>$request->amount
+//           ]);
 
 
             DB::commit();
@@ -146,7 +151,7 @@ class ExpenseController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(IncomeRequest $request, Expense $expense)
+    public function update(ExpenseRequest $request, Expense $expense)
     {
         $user = auth()->user();
 

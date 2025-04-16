@@ -8,9 +8,9 @@
                 <label for="amount" class="form-label">Amount</label>
                 <input type="text" value="{{$expense->amount}}" placeholder="Rs" class="form-control @error('amount') is-invalid @enderror" id="amount" name="amount">
                 <x-input-error :messages="$errors->get('amount')" class="mt-2" />
-                @error('amount')
-                <p class="invalid-feedback">{{ $message }}</p>
-                @enderror
+{{--                @error('amount')--}}
+{{--                <p class="invalid-feedback">{{ $message }}</p>--}}
+{{--                @enderror--}}
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
