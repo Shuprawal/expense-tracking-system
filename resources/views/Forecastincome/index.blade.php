@@ -8,24 +8,24 @@
 
         <div class="d-flex flex-wrap gap-3 mb-4">
 
-            <x-search :route="'forecasts.index'"
-            :parameters="[
-                'inputText'=>request('inputText'),
-                'start'=>request('start'),
-                'end'=>request('end')
-            ]"
-            />
-{{--            @php--}}
-{{--                $filteredParameters = array_filter([--}}
-{{--                    'inputText' => request('inputText'),--}}
-{{--                    'start' => request('start'),--}}
-{{--                    'end' => request('end'),--}}
-{{--                    --}}
-{{--                ], fn($value) => filled($value));--}}
-{{--            @endphp--}}
+{{--            <x-search :route="'forecasts.index'"--}}
+{{--            :parameters="[--}}
+{{--                'inputText'=>request('inputText'),--}}
+{{--                'start'=>request('start'),--}}
+{{--                'end'=>request('end')--}}
+{{--            ]"--}}
+{{--            />--}}
+            @php
+                $filteredParameters = array_filter([
+                    'inputText' => request('inputText'),
+                    'start' => request('start'),
+                    'end' => request('end'),
+
+                ], fn($value) => filled($value));
+            @endphp
 
 
-{{--            <x-search :route="'forecasts.index'" :parameters="$filteredParameters" />--}}
+            <x-search :route="'forecasts.index'" :parameters="$filteredParameters" />
             <x-date-duration :route="'forecasts.index'" :parameters="[
                 'search'=>$search,
 //                'start'=>request('start'),
@@ -55,7 +55,7 @@
                 </div>
             @empty
                 <div class="col-12 text-center text-muted">
-                    <p>No expenses for this month</p>
+                    <p>No income for this month</p>
                 </div>
             @endforelse
         </div>

@@ -90,11 +90,14 @@ class ExpenseController extends Controller
      */
     public function store(ExpenseRequest $request)
     {
+//        $a=emplode()
 //        $aa=strlen($request->amount);
 //        $aa=strlen($request->amount);
 //        dd($aa);
 //        dd(length().;
 //        if (ob_get_length($request->amount))
+
+
         try {
             DB::beginTransaction();
            Expense::create([

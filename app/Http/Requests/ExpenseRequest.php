@@ -22,10 +22,16 @@ class ExpenseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'amount' => 'required|numeric|min:1',
+            'amount' => 'required|numeric|min:1 |regex:/^\d{1,16}(\.\d{1,4})?$/',
             'category_id' => 'required|exists:categories,id',
             'description' => 'required|string',
             'date' => 'required|date|before:tomorrow',
+        ];
+    }
+    public function messages(): array
+    {
+        return [
+            'amount.regex'=>'Spending limit reached'
         ];
     }
 }

@@ -88,9 +88,14 @@ class IncomeController extends Controller
 
 
         $amount = $request->input('amount');
+//        dd($income->amount);
+
         try {
             DB::beginTransaction();
-            $income =  $user-> incomes()-> update([
+
+//            $editIncome= Income::findOrFail($income);
+            abort_if($income->user_id != auth()->id(), 403);
+            $income -> update([
                 'amount'=>$amount,
                 'date'=>$request->input('date'),
                 'description'=>$request->input('description'),

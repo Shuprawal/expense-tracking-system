@@ -46,8 +46,10 @@ class ForecastincomeController extends Controller
     public function index(DateDurationRequest $request)
     {
         $search = $request->get('inputText');
+//        dd($search);
         $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());
         $end=$request->input('end',Carbon::now()->endOfMonth()->toDateString());
+
         $user = auth()->user();
         $incomes = Income::where('user_id',$user->id)
             ->where('description','LIKE',"%{$search}%")
@@ -56,6 +58,20 @@ class ForecastincomeController extends Controller
         return view('forecastincome.index',compact('incomes','search','start','end'));
 
     }
+
+    //    public function index(DateDurationRequest $request)
+//    {
+//        $search = $request->get('inputText');
+//        $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());
+//        $end=$request->input('end',Carbon::now()->endOfMonth()->toDateString());
+//        $user = auth()->user();
+//        $incomes = Income::where('user_id',$user->id)
+//            ->where('description','LIKE',"%{$search}%")
+//            ->whereBetween('date',[$start,$end])->paginate(10);
+//
+//        return view('forecastincome.index',compact('incomes','search','start','end'));
+//
+//    }
 
     /**
      * Show the form for creating a new resource.
