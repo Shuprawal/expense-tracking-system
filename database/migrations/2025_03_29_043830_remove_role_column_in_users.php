@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role',['admin','user'])->after('name');
+            $table->enum('role',['admin','user']);
         });
     }
 };

@@ -16,11 +16,17 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $admin=User::where('username','admin')->first();
-        Category::create([
-            'name'=>'Food',
-            'disabled'=>'no',
-            'date'=>Carbon::now(),
-            'user_id'=>$admin->id,
-        ]);
+        $names=['Food','Rent','Study','Entertainment'];
+
+
+        foreach ($names as $name){
+            Category::create([
+                'name'=>$name,
+                'disabled'=>'no',
+//                'date'=>Carbon::now(),
+                'user_id'=>$admin->id,
+            ]);
+        }
+
     }
 }

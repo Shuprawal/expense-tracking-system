@@ -64,6 +64,10 @@ Route::middleware(['auth','admin',
     Route::get('/permissions', [PermissionController::class, 'index'])->name('permissions.index');
     Route::put('/categories/disable/{category}', [CategoryController::class, 'disable'])->name('categories.disable');
 
+    Route::post('categories/admin/store', [CategoryController::class, 'adminStore'])->name('categories.adminStore');
+    Route::get('categories/admin/edit/{category}', [CategoryController::class, 'adminEdit'])->name('categories.adminEdit');
+
+    Route::put('categories/admin/edit/{category}', [CategoryController::class, 'adminUpdate'])->name('categories.adminUpdate');
 
     Route::resource('roles',RoleController::class);
     Route::post('detachRole/{role}/{user}',[RoleController::class, 'detachRole'])->name('role.detach');

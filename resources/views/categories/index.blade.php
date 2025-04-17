@@ -1,6 +1,7 @@
 <x-app-layout>
     <div class="container mt-5 p-4 border rounded shadow bg-white" style="max-width: 800px;">
         <h2 class="mb-4 text-center">Categories</h2>
+        <a class="btn btn-outline-secondary" href="{{route('categories.create')}}">Add</a>
         <x-search :route="'categories.index'" />
 
 
@@ -20,7 +21,9 @@
                     <td>{{ $category->name }}</td>
                     <td>{{ $category->user->username}}</td>
                     <td>{{ $category->users_count}}</td>
-                    <td>
+                    <td class="d-flex align-items-center gap-2">
+
+                        <a href="{{route('categories.adminEdit',$category->id)}}" class="btn btn-outline-secondary"><i class="bi bi-pencil-fill"></i></a>
                         <x-delete-button :route="'categories.destroy'" :parameters="$category->id"/>
                     </td>
                     <td>

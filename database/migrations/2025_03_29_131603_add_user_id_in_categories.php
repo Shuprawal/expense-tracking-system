@@ -15,6 +15,8 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
 
             $table->foreign('user_id')->references('id')->on('users');
+//            $table->dropColumn('date');
+//            $table->dropColumn('limit');
         });
     }
 
@@ -25,6 +27,8 @@ return new class extends Migration
     {
         Schema::table('categories', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
+//            $table->date('date');
+//            $table->decimal('limit', 8, 2)->default(0);
         });
     }
 };

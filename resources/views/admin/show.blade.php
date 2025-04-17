@@ -34,8 +34,8 @@
                                 <p class="fw-bold text-primary">${{ number_format($expense->amount, 2) }}</p>
                                 <p class="text-muted">{{ $expense->description }}</p>
                                 <div class="d-flex justify-content-between mt-3">
-                                    <x-delete-button :route="'expenses.destroy'" :parameters="$expense->id" />
-                                    <a href="{{ route('expenses.edit', $expense->id) }}" class="btn btn-outline-dark btn-sm">Edit</a>
+{{--                                    <x-delete-button :route="'expenses.destroy'" :parameters="$expense->id" />--}}
+{{--                                    <a href="{{ route('expenses.edit', $expense->id) }}" class="btn btn-outline-dark btn-sm">Edit</a>--}}
                                 </div>
                             </div>
                         </div>

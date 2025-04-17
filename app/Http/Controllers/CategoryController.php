@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AdminCategoryRequest;
 use App\Http\Requests\CategoryRequest;
 use App\Http\Requests\DateDurationRequest;
 use App\Http\Requests\ForecastPercentage;
@@ -28,6 +29,7 @@ class CategoryController extends Controller
             ->where('name','LIKE',"%{$search}%")
 //            ->where('disabled','no')
             ->withCount('users')
+            ->orderBy('created_at','DESC')
             ->paginate(10);
         return view('categories.index', compact('categories'));
     }
@@ -44,6 +46,12 @@ class CategoryController extends Controller
         return view('categories.display', compact('categories'));
     }
 
+    public function adminEdit(Category $category)
+    {
+        $user = Auth::user();
+        abort_unless($user->hasAdminRole(),403);
+        return view('categories.adminEdit', compact('category'));
+    }
     public function edit($id)
     {
         $user = Auth::user();
@@ -66,6 +74,38 @@ class CategoryController extends Controller
         return view('categories.create');
     }
 
+
+    public function adminStore(AdminCategoryRequest $request)
+    {
+        $newCategory = $request->category;
+
+        $user = Auth::user();
+        $categoryQuery=Category::where('name', $newCategory);
+        $existingCategory=$categoryQuery->first();
+        $thrashedCategory=$categoryQuery->onlyTrashed()->first();
+        if ($existingCategory) {
+            return redirect()->back()->withInput()->withErrors(['category' => 'Category already exists']);
+        }
+        if ($thrashedCategory) {
+            $thrashedCategory->restore();
+
+            return redirect()->route('categories.index');
+        }
+        try {
+            if (!$existingCategory && !$thrashedCategory){
+                Category::create([
+                    'name' => ucfirst(trim($newCategory)),
+                    'user_id' => $user->id
+                ]);
+                return redirect()->route('categories.index');
+            }
+
+
+        }catch (\Exception $exception){
+            return back()->withInput()->withErrors($exception->getMessage());
+        }
+
+    }
 
 
     public function store(CategoryRequest $request)
@@ -138,6 +178,48 @@ class CategoryController extends Controller
 
 
 
+    public function adminUpdate(AdminCategoryRequest $request, Category $category)
+    {
+        $categoryName=$request->input('category');
+        $categoryQuery=Category::where('name', $categoryName);
+        $existingCategory=$categoryQuery->where('id','!=',$category->id)->first();
+        $thrashedCategory=$categoryQuery->onlyTrashed()->first();
+        if ($existingCategory) {
+            return redirect()->back()->withInput()->withErrors(['category' => 'Category already exists']);
+        }
+        if ($thrashedCategory) {
+            $thrashedCategory->restore();
+            Expense::where('category_id',$category->id)->update(['category_id'=>$thrashedCategory->id]);
+            $thrashedCategory->users()->sync(
+                $category->users->mapWithKeys(function ($user) {
+                    return [$user->id => [
+                        'date' => $user->pivot->date,
+                        'percentage' => $user->pivot->percentage,
+                    ]];
+                })->toArray()
+            );
+            $category->users()->detach();
+
+//            Expense::where('category_id', $oldCategory->id)->update(['category_id' => $newCategory->id]);
+
+            $category->delete();
+
+        }
+        try {
+            if (!$existingCategory && !$thrashedCategory) {
+                $category->update([
+                    'name' => ucfirst(trim($categoryName)),
+                ]);
+            }
+
+
+            return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
+
+        }catch (\Exception $exception){
+            return back()->withInput()->withErrors($exception->getMessage());
+        }
+
+    }
 
     public function update(Request $request, $id)
     {

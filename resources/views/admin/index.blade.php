@@ -14,7 +14,7 @@
                             <th scope="col">Total expenses count</th>
                             <th scope="col">Role</th>
                             <th scope="col">Action</th>
-                            <th scope="col">View</th>
+{{--                            <th scope="col">View</th>--}}
 
                         </tr>
                         </thead>
@@ -28,16 +28,17 @@
                                 <td>{{ $user->expenses_count }} </td>
                                 <td>{{ ucfirst($user->roles->pluck('name')->implode(', ')) }}</td>
                                 <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <a href="{{route('users.edit',$user->id)}}}">edit</a>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <a href="{{route('users.show',$user->id)}}"><i class="bi bi-eye"></i> </a>
+{{--                                        <a href="{{route('users.edit',$user->id)}}}"><i class="bi bi-pencil-fill"></i></a>--}}
                                         <x-delete-button :route="'users.destroy'" :parameters="$user->id"/>
                                     </div>
-                                </td>
-                                <td>
-                                    <a href="{{route('users.show',$user->id)}}"><i class="bi bi-eye"></i> Watch</a>
+
+
                                 </td>
                             </tr>
                         @endforeach
+
 
                         </tbody>
                     </table>

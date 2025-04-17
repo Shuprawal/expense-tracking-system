@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class DateDurationRequest extends FormRequest
+class AdminCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,16 +22,7 @@ class DateDurationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start' => 'date|before_or_equal:end',
-            'end' => 'date|after_or_equal:start',
-        ];
-    }
-    public function messages(): array
-    {
-        return [
-
-            'start.before' => 'Start date must be before end date',
-            'end.after' => 'End date must be after start date',
+            'category' => 'required|string|',
         ];
     }
 }
