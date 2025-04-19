@@ -74,15 +74,21 @@ class ExpenseController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
+        $request->validate([
+            'month' => 'integer|between:1,12',
+        ]);
+
+        $selectedMonth = $request->input('month', now()->month);
+//        dd($selectedMonth);
         $categories = Category::with('users')
-            ->whereHas('users', function ($query) {
+            ->whereHas('users', function ($query)use($selectedMonth) {
                 $query->where('users.id', auth()->id())
-                ->whereMonth('date', now()->month);
+                ->whereMonth('date', $selectedMonth);
             })
             ->get();
-        return view('expenses.create',compact('categories'));
+        return view('expenses.create',compact('categories','selectedMonth'));
     }
 
     /**
@@ -90,16 +96,17 @@ class ExpenseController extends Controller
      */
     public function store(ExpenseRequest $request)
     {
-//        $a=emplode()
-//        $aa=strlen($request->amount);
-//        $aa=strlen($request->amount);
-//        dd($aa);
-//        dd(length().;
-//        if (ob_get_length($request->amount))
-
 
         try {
+            $selectedMonth = (int) $request->input('month', now()->month);
+            $dateMonth = \Carbon\Carbon::parse($request->date)->month;
+
+            if ($dateMonth !== $selectedMonth) {
+                return redirect()->back()->withInput()
+                    ->withErrors(['date' => 'Selected date does not match selected month.']);
+            }
             DB::beginTransaction();
+
            Expense::create([
                 'amount'=>$request->amount,
                 'description'=> $request->description,
@@ -107,10 +114,6 @@ class ExpenseController extends Controller
                 'date'=> $request->date,
                 'category_id'=> $request->category_id
             ]);
-
-//           $expense->statements()->create([
-//               'amount'=>$request->amount
-//           ]);
 
 
             DB::commit();

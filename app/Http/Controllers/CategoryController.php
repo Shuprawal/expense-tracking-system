@@ -231,9 +231,10 @@ class CategoryController extends Controller
         $newName = $request->get('name');
         $user = Auth::user();
 
-        $categoryTrashed = Category::withTrashed()->where('name', $newName)->first();
+        $categoryTrashed = Category::onlyTrashed()->where('name', $newName)->first();
 
         if ($categoryTrashed) {
+//            dd('aaa');
             $categoryTrashed->restore();
             $categoryTrashed -> update(['user_id' => $user->id]);
             $newCategory = $categoryTrashed;
@@ -243,7 +244,15 @@ class CategoryController extends Controller
             $existingCategory = Category::where('name', $newName)->first();
 
             if ($existingCategory) {
+//                dd('bbbb');
+//                dd($existingCategory);;
                 $newCategory = $existingCategory;
+               $userCategory= $existingCategory->whereHas('users', function ($query) use ($user) {
+                    $query->where('user_id',auth()->id());
+                });
+               if ($userCategory){
+                   return redirect()->back()->with('error', 'Category already exists.');
+               }
             }else{
                 $newCategory= Category::create([
                     'name' => ucfirst($newName),
@@ -305,7 +314,10 @@ class CategoryController extends Controller
      */
     public function show(DateDurationRequest $request, Category $category)
     {
-        $selectedDate =$request->input('month',now()->month);
+//        dd($request->all());
+
+//        abort_if($category->user_id != auth()->id(), 403);
+//        $selectedDate =$request->input('month',now()->month);
         $start =$request->input('start',now()->startOfYear()->format('Y-m-d'));
         $end =$request->input('end',now()->endOfYear()->format('Y-m-d'));
 //
@@ -313,6 +325,10 @@ class CategoryController extends Controller
 //            $query->where('category_user.category_id', $category->id);
 //        }
 //        )->get();
+        $users = $category->users()->wherePivot('date','>=',$start)
+            ->wherePivot('date','<=',$end)->exists();
+        abort_unless($users, 403);
+
 //        $userCount = $users->count();
 //        return view('admin.userCategory', compact('category', 'users', 'userCount'));
 
@@ -454,7 +470,10 @@ class CategoryController extends Controller
 
     public function forecastEdit(Request $request)
     {
+        $user = Auth::user();
 
+        $category=$user->categories()->where('category_id',$request->category_id)->first();
+        abort_if(!$category, 403);
         $month=$request->date;
         $year = Carbon::now()->year;
 
@@ -463,7 +482,7 @@ class CategoryController extends Controller
         $start = Carbon::create($date)->startOfMonth();
         $end = Carbon::create($date)->endOfMonth();
 
-        $categories =  Category::find($request->category_id)->users()
+        $categories =  Category::findOrFail($request->category_id)->users()
             ->where('id',Auth::id())
             ->wherePivot('date','>=', $start)->
             wherePivot('date','<=', $end)

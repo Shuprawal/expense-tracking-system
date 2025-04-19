@@ -147,11 +147,17 @@ class ForecastincomeController extends Controller
 
     public function report(Request $request)
     {
-        $expenses = [];
-        $selectedMonth = $request->input('month', now()->month);
-        $selectedYear = $request->input('year', now()->year);
 
-        $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
+        $expenses = [];
+        $request->validate([
+            'month' => 'integer|between:1,12',
+        ]);
+
+        $selectedMonth = $request->input('month', now()->month);
+
+//        $selectedYear = $request->input('year', now()->year);
+
+//        $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
         $user = auth()->user();
 //        $start= $selectedDate->copy()->startOfMonth()->toDateString();
 //        $end=$selectedDate->copy()->endOfMonth()->toDateString();
@@ -159,7 +165,7 @@ class ForecastincomeController extends Controller
 //        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
 
         $nextMonthSelected = $selectedMonth == Carbon::now()->addMonth()->month;
-        $upComingMonths =$selectedMonth > Carbon::now()->month;
+//        $upComingMonths =$selectedMonth > Carbon::now()->month;
 
         $isMonth= $nextMonthSelected ? Carbon::now()->month : $selectedMonth;
 
@@ -208,25 +214,19 @@ class ForecastincomeController extends Controller
                 ->whereMonth('category_user.date', $isMonth)
                 ->withPivot('percentage')
                 ->first();
-//            if ($selectedMonth == Carbon::now()->addMonth()->month ) {
-//                $pivot= $category->users()->whereMonth('category_user.date', Carbon::now()->month) ->first();;
-//
-//
-//            }else{
-//                $pivot= $category->users()->whereMonth('category_user.date', Carbon::now()->month((int)$selectedMonth)) ->first();;
-//
-//            }
+
 
             $percentage = $pivot?->pivot->percentage ?? 0;
             $amount = ($percentage / 100) * $totalIncome;
 
+            $spended = Expense::where('user_id', $user->id)
+                ->where('category_id', $category->id)
+                ->whereMonth('date', $isMonth)
+                ->get();
             if ($selectedMonth == Carbon::now()->addMonth(1)->month) {
 
 
-                $spended = Expense::where('user_id', $user->id)
-                    ->where('category_id', $category->id)
-                    ->whereMonth('date', $isMonth)
-                    ->get();
+
 
 
 
@@ -251,10 +251,10 @@ class ForecastincomeController extends Controller
 
             } else {
 
-                $spended = Expense::where('user_id', $user->id)
-                    ->where('category_id', $category->id)
-                    ->whereMonth('date', $isMonth)
-                    ->get();
+//                $spended = Expense::where('user_id', $user->id)
+//                    ->where('category_id', $category->id)
+//                    ->whereMonth('date', $isMonth)
+//                    ->get();
 
 //                dd($spended);
                 $totalExpense = $spended->sum('amount');

@@ -59,7 +59,8 @@ class StoreFormRequest extends FormRequest
             }
             $totalPercentage = $newPercentage + $exitingPercentage;
             if ($totalPercentage > 100) {
-                $validator->errors()->add('percentage', 'The total percentage must not exceed 100% also look for existing percentage.');
+                $validator->errors()->add('percentage', 'The total percentage must not exceed 100% as existing percentage is .' .$exitingPercentage );
+
             }
 
 
