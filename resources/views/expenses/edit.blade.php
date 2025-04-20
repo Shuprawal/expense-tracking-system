@@ -16,17 +16,17 @@
                 <label for="description" class="form-label">Description</label>
                 <textarea type="text"  class="form-control @error('description') is-invalid @enderror" id="description" name="description">{{$expense->description}}</textarea>
                 <x-input-error :messages="$errors->get('description')" class="mt-2" />
-                @error('description')
-                <p class="invalid-feedback">{{$message}}</p>
-                @enderror
+{{--                @error('description')--}}
+{{--                <p class="invalid-feedback">{{$message}}</p>--}}
+{{--                @enderror--}}
             </div>
             <div class="mb-3">
                 <label for="date" class="form-label">Date</label>
                 <input type="date" value="{{$expense->date}}"  class="form-control @error('date') is-invalid @enderror" id="date" name="date">
                 <x-input-error :messages="$errors->get('date')" class="mt-2" />
-                @error('date')
-                <p class="invalid-feedback">{{$message}}</p>
-                @enderror
+{{--                @error('date')--}}
+{{--                <p class="invalid-feedback">{{$message}}</p>--}}
+{{--                @enderror--}}
             </div>
             <div class="mb-3">
                 <label for="category" class="form-label">Category</label>

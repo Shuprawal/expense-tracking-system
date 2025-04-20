@@ -318,6 +318,14 @@ class CategoryController extends Controller
 
 //        abort_if($category->user_id != auth()->id(), 403);
 //        $selectedDate =$request->input('month',now()->month);
+        $user=Auth::user();
+        $authorize= Category::whereHas('users', function ($query) use ($category,$user) {
+            $query->where('user_id',$user->id)
+                ->where('category_id',$category->id);
+        })->first();
+        if(!$authorize){
+            abort(403);
+        }
         $start =$request->input('start',now()->startOfYear()->format('Y-m-d'));
         $end =$request->input('end',now()->endOfYear()->format('Y-m-d'));
 //
@@ -470,10 +478,17 @@ class CategoryController extends Controller
 
     public function forecastEdit(Request $request)
     {
+
         $user = Auth::user();
 
+        if ($request->date<1 || $request->date>12) {
+            return redirect()->back()->with('error', 'Invalid month.');
+        }
         $category=$user->categories()->where('category_id',$request->category_id)->first();
+
         abort_if(!$category, 403);
+
+
         $month=$request->date;
         $year = Carbon::now()->year;
 
@@ -481,6 +496,8 @@ class CategoryController extends Controller
 
         $start = Carbon::create($date)->startOfMonth();
         $end = Carbon::create($date)->endOfMonth();
+        $invalidDate=$user->categories()->wherePivot('date','>=', $start)->wherePivot('date','<=', $end)->first();
+        abort_if(!$invalidDate, 404);
 
         $categories =  Category::findOrFail($request->category_id)->users()
             ->where('id',Auth::id())
@@ -519,8 +536,10 @@ class CategoryController extends Controller
         if ($newPercentage<0){
             return redirect()->back()->with('error', 'percentage must be at least 0.');
         }
-        if (($exisitingPercentage - $oldPercentage) + $newPercentage > 100 || $newPercentage > 100) {
-            return redirect()->back()->with('error', 'Altogether percentage must be less than 100.');
+        $newTotal = $exisitingPercentage + $newPercentage;
+        if ($newTotal > 100) {
+            $remaining = 100 - $exisitingPercentage;
+            return redirect()->back()->with('error', "Invalid update. You can only assign up to $remaining% to this category for the selected month.");
         }
 
 

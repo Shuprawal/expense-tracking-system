@@ -43,12 +43,12 @@ class IncomeController extends Controller
         $amount = $request->input('amount');
         try {
             DB::beginTransaction();
-            $forecastIncome =  $user-> incomes()-> create([
+            $income =  $user-> incomes()-> create([
                 'amount'=>$amount,
                 'date'=>$request->input('date'),
                 'description'=>$request->input('description'),
             ]);
-            $forecastIncome->statements()->create([
+            $income->statements()->create([
                 'amount'=>$amount,
             ]);
             DB::commit();

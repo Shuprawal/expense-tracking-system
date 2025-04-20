@@ -107,7 +107,7 @@ class ExpenseController extends Controller
             }
             DB::beginTransaction();
 
-           Expense::create([
+          $expense= Expense::create([
                 'amount'=>$request->amount,
                 'description'=> $request->description,
                 'user_id'=> auth()->id(),
@@ -115,6 +115,10 @@ class ExpenseController extends Controller
                 'category_id'=> $request->category_id
             ]);
 
+
+            $expense->statements()->create([
+                'amount'=>$request->amount,
+            ]);
 
             DB::commit();
             return redirect()->route('expenses.index');
@@ -164,12 +168,15 @@ class ExpenseController extends Controller
         try {
             DB::beginTransaction();
 
-            $expense ->update([
+           $expenses= $expense ->update([
                 'amount'=>$request->amount,
                 'description'=> $request->description,
                 'date'=> $request->date,
                 'category_id'=> $request->category_id
             ]);
+            $expense->statements()->update([
+               'amount'=>$request->amount
+           ]);
 
             DB::commit();
             return redirect()->route('expenses.index');
@@ -187,6 +194,7 @@ class ExpenseController extends Controller
     {
 
         $expense->delete();
+        $expense->statements()->delete();
         return redirect()->route('expenses.index');
     }
 //

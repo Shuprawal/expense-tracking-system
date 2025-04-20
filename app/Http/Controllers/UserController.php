@@ -33,6 +33,16 @@ class UserController extends Controller
         return view('admin.index', compact('users'));
     }
 
+    public function userDashboard()
+    {
+        $user = Auth::user();
+
+        $mostUsedCategories =$user->categories()->withSum('expenses', 'amount')->orderBy('expenses_sum_amount', 'desc')->limit(3)->get();
+        $expenses = $user->expenses()->whereMonth('date', Carbon::now()->month)->avg('amount');
+        $incomes = $user->incomes()->whereMonth('date', Carbon::now()->month)->avg('amount');
+
+        return view('dashboard', compact('mostUsedCategories', 'expenses', 'incomes'));
+    }
 
 
     public function dashboard()
