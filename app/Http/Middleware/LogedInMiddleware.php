@@ -16,7 +16,7 @@ class LogedInMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if(auth()->check()){
-            return redirect()->route('dashboard');
+            return redirect()->route('user.dashboard');
         }
         return $next($request);
     }

@@ -31,7 +31,8 @@
                                     <div class="d-flex align-items-center gap-3">
                                         <a href="{{route('users.show',$user->id)}}"><i class="bi bi-eye"></i> </a>
 {{--                                        <a href="{{route('users.edit',$user->id)}}}"><i class="bi bi-pencil-fill"></i></a>--}}
-                                        <x-delete-button :route="'users.destroy'" :parameters="$user->id"/>
+                                        <x-delete-button :route="'users.destroy'" :parameters="$user->id" :title="ucfirst($user->username). ' Delete'"
+                                        :message="'User '. ucfirst($user->username). ' will be deleted permanently'"/>
                                     </div>
 
 

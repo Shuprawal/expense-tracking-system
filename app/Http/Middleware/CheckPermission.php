@@ -30,7 +30,7 @@ class CheckPermission
             'forecast.percentage',
             'categories.show',
             'welcome',
-            'dashboard',
+            'user.dashboard',
             'categories.index',
             'categories.create',
             'categories.store',

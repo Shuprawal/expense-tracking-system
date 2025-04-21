@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('statements', function (Blueprint $table) {
-            $table->id();
-            $table->decimal('amount',30,4);
-            $table->morphs('statementable');
-            $table->timestamps();
+        Schema::table('statements', function (Blueprint $table) {
+            $table->date('date')->after('amount');
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('statements');
+        Schema::table('statements', function (Blueprint $table) {
+            $table->dropColumn('date');
+        });
     }
 };

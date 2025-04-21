@@ -88,7 +88,14 @@
                             <p class="fw-bold text-primary">${{ number_format($expense->amount, 2) }}</p>
                             <p class="text-muted">{{ $expense->description }}</p>
                             <div class="d-flex justify-content-between mt-3">
-                                <x-delete-button :route="'expenses.destroy'" :parameters="$expense->id" />
+{{--                                <x-delete-button :route="'expenses.destroy'" :parameters="$expense->id" />--}}
+                                <x-delete-button
+                                    :route="'expenses.destroy'"
+                                    :parameters="$expense->id"
+                                    :title="'Delete Expense'"
+                                    :message="'Are you sure you want to delete this expense? This cannot be undone.'"
+                                />
+
                                 <a href="{{ route('expenses.edit', $expense->id) }}" class="btn btn-outline-dark btn-sm"><i class="bi bi-pen"></i></a>
                             </div>
                         </div>

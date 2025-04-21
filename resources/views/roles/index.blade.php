@@ -13,9 +13,9 @@
                         <li class="flex items-center justify-between m-0">
                             <a href="{{ route('roles.show', $role->id) }}"
                                class="text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-800 dark:hover:text-indigo-300 transition duration-150">
-                                {{ $role->name }}
+                                {{ ucfirst($role->name) }}
                             </a>
-                            <x-delete-button :route="'roles.destroy'" :parameters="$role" />
+                            <x-delete-button :route="'roles.destroy'" :parameters="$role" :title="ucfirst($role->name). ' Delete'"  :message="'Are you sure you want to delete this role?'"/>
                         </li>
                     </ul>
                 </div>

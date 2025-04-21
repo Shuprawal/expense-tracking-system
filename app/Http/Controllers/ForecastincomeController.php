@@ -100,13 +100,11 @@ class ForecastincomeController extends Controller
         $amount = $request->input('amount');
         try {
             DB::beginTransaction();
-            $forecastIncome =  $user-> forecastexpenses()-> create([
+             $user-> forecastexpenses()-> create([
                     'amount'=>$amount,
 
                 ]);
-                $forecastIncome->statements()->create([
-                    'amount'=>$amount,
-                ]);
+
             DB::commit();
                 return redirect()->route('forecasts.index');
         }catch (\Exception $exception){

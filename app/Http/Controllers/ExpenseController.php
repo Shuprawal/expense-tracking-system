@@ -114,9 +114,8 @@ class ExpenseController extends Controller
                 'date'=> $request->date,
                 'category_id'=> $request->category_id
             ]);
-
-
             $expense->statements()->create([
+                'date'=> $request->date,
                 'amount'=>$request->amount,
             ]);
 
@@ -175,6 +174,7 @@ class ExpenseController extends Controller
                 'category_id'=> $request->category_id
             ]);
             $expense->statements()->update([
+                'date'=>$request->date,
                'amount'=>$request->amount
            ]);
 
@@ -192,10 +192,19 @@ class ExpenseController extends Controller
      */
     public function destroy(Expense $expense)
     {
+        try {
+            DB::beginTransaction();
+            $expense->delete();
+            $expense->statements()->delete();
+            DB::commit();
+            return redirect()->route('expenses.index');
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        }
 
-        $expense->delete();
-        $expense->statements()->delete();
-        return redirect()->route('expenses.index');
+
+
     }
 //
 

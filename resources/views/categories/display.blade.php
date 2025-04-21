@@ -32,7 +32,13 @@
                         <a href="{{route('categories.edit',$category->id)}}">edit</a>
                     </td>
                     <td>
-                        <x-delete-button :route="'categories.destroy'" :parameters="$category->id" />
+{{--                        <x-delete-button :route="'categories.destroy'" :parameters="$category->id" />--}}
+                        <x-delete-button
+                            :route="'categories.destroy'"
+                            :parameters="$category->id"
+                            :title="'Delete Category'"
+                            :message="'Are you sure you want to delete this Category? This cannot be undone.'"
+                        />
                     </td>
                     <td>
                        <a class="dropdown-item" href="{{ route('categories.show', $category->id) }}">watch</a>

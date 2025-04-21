@@ -24,7 +24,7 @@
                     <td class="d-flex align-items-center gap-2">
 
                         <a href="{{route('categories.adminEdit',$category->id)}}" class="btn btn-outline-secondary"><i class="bi bi-pencil-fill"></i></a>
-                        <x-delete-button :route="'categories.destroy'" :parameters="$category->id"/>
+                        <x-delete-button :route="'categories.destroy'" :parameters="$category->id" :title="$category->name. ' Category'" :message="'Are you sure you want to delete ' .  $category->name . ' category?'"/>
                     </td>
                     <td>
                         <form action="{{route('categories.disable',$category->id)}}" method="post">

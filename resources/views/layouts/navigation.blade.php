@@ -89,6 +89,12 @@
                             {{ __('Category') }}
                         </x-nav-link>
                     </div>
+
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link :href="route('statements.index')" :active="request()->routeIs('statements.index')">
+                            {{ __('Transactions') }}
+                        </x-nav-link>
+                    </div>
                 @endif
 
 
@@ -148,7 +154,7 @@
             </x-responsive-nav-link>
         </div>
 
-        <!-- Responsive Settings Options -->
+
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>

@@ -7,6 +7,7 @@ use App\Http\Controllers\IncomeController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StatementController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/forecast/remove', [CategoryController::class, 'forecastDetach'])->name('forecasts.detach');
 
 
+    Route::resource('statements',StatementController::class);
 
     Route::get('categories/define/category', [CategoryController::class, 'newCreate'])->name('new-categories');
 

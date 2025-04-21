@@ -41,14 +41,16 @@ class IncomeController extends Controller
 
 
         $amount = $request->input('amount');
+        $date = $request->input('date');
         try {
             DB::beginTransaction();
             $income =  $user-> incomes()-> create([
                 'amount'=>$amount,
-                'date'=>$request->input('date'),
+                'date'=>$date,
                 'description'=>$request->input('description'),
             ]);
             $income->statements()->create([
+                'date'=>$date,
                 'amount'=>$amount,
             ]);
             DB::commit();
@@ -100,9 +102,10 @@ class IncomeController extends Controller
                 'date'=>$request->input('date'),
                 'description'=>$request->input('description'),
             ]);
-//            $income->statements()->update([
-//                'amount'=>$amount,
-//            ]);
+            $income->statements()->update([
+                'date'=> $request->date,
+                'amount'=>$amount,
+            ]);
             DB::commit();
             return redirect()->route('forecasts.index');
         }catch (\Exception $exception){
@@ -118,7 +121,17 @@ class IncomeController extends Controller
     public function destroy(Income $income)
     {
         abort_if($income->user_id != auth()->id(), 403);
-        $income->delete();
-        return redirect()->back()->with('success','Income deleted successfully');
+        try {
+            DB::beginTransaction();
+            $income->delete();
+            $income->statements()->delete();
+            DB::commit();
+            return redirect()->back()->with('success','Income deleted successfully');
+        }catch (\Exception $exception){
+            DB::rollBack();
+            return back()->withInput()->with('error',$exception->getMessage());
+        }
+
+
     }
 }

@@ -61,15 +61,21 @@
                                 <td>{{ number_format($expense['remaining'], 2) }}</td>
 
                                 <td>
-                                    <form action="{{ route('forecasts.detach') }}" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <input type="hidden" name="category_id" value="{{ $expense['category_id'] }}">
-                                        <input type="hidden" name="date" value="{{ $selectedMonth }}">
-                                        <button type="submit" class="btn btn-outline-danger">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+{{--                                    <form action="{{ route('forecasts.detach') }}" method="POST">--}}
+{{--                                        @csrf--}}
+{{--                                        @method('DELETE')--}}
+{{--                                        <input type="hidden" name="category_id" value="{{ $expense['category_id'] }}">--}}
+{{--                                        <input type="hidden" name="date" value="{{ $selectedMonth }}">--}}
+{{--                                        <button type="submit" class="btn btn-outline-danger">--}}
+{{--                                            <i class="bi bi-trash"></i>--}}
+{{--                                        </button>--}}
+{{--                                    </form>--}}
+                                    <x-delete-button
+                                        :route="'forecasts.detach'"
+                                        :parameters="['category_id' => $expense['category_id'], 'date' => $selectedMonth]"
+                                        :title="'Delete Category'"
+                                        :message="'Are you sure you want to delete this Category? This cannot be undone.'"
+                                    />
                                 </td>
                             </tr>
                         @endforeach
