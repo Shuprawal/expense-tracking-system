@@ -64,10 +64,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Income::class);
     }
-    public function budgets()
-    {
-        return $this->hasOne(Budget::class);
-    }
+
 
     public function totalBudget()
     {
@@ -94,10 +91,7 @@ class User extends Authenticatable
             $query->where('name', $permission);
         })->exists();
     }
-//    public function isAdmin()
-//    {
-//        return $this->roles->contains('name', 'admin');
-//    }
+
     public function hasAdminRole(): bool
     {
         return $this->roles->contains(function ($role) {

@@ -65,19 +65,14 @@ class IncomeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Income $income)
-    {
-        //
-    }
+
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(Income $income)
     {
-        $user=auth()->user();
         abort_if($income->user_id != auth()->id(), 403);
-
         return view('income.edit',compact('income'));
     }
 
@@ -86,16 +81,11 @@ class IncomeController extends Controller
      */
     public function update(IncomeRequest $request, Income $income)
     {
-        $user = auth()->user();
-
 
         $amount = $request->input('amount');
-//        dd($income->amount);
-
         try {
             DB::beginTransaction();
 
-//            $editIncome= Income::findOrFail($income);
             abort_if($income->user_id != auth()->id(), 403);
             $income -> update([
                 'amount'=>$amount,

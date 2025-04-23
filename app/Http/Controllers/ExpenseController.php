@@ -81,11 +81,13 @@ class ExpenseController extends Controller
         ]);
 
         $selectedMonth = $request->input('month', now()->month);
-//        dd($selectedMonth);
+        $date = Carbon::createFromDate(now()->year, $selectedMonth, 1);
+        $start=$date->copy()->startOfMonth();
+        $end=$date->copy()->endOfMonth();
         $categories = Category::with('users')
-            ->whereHas('users', function ($query)use($selectedMonth) {
+            ->whereHas('users', function ($query)use($start,$end) {
                 $query->where('users.id', auth()->id())
-                ->whereMonth('date', $selectedMonth);
+                ->whereBetween('date',[$start,$end]);
             })
             ->get();
         return view('expenses.create',compact('categories','selectedMonth'));
@@ -100,7 +102,6 @@ class ExpenseController extends Controller
         try {
             $selectedMonth = (int) $request->input('month', now()->month);
             $dateMonth = \Carbon\Carbon::parse($request->date)->month;
-
             if ($dateMonth !== $selectedMonth) {
                 return redirect()->back()->withInput()
                     ->withErrors(['date' => 'Selected date does not match selected month.']);
@@ -129,17 +130,6 @@ class ExpenseController extends Controller
 
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Expense $expense)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Expense $expense)
     {
        abort_if($expense->user_id != auth()->id(), 403);
@@ -153,7 +143,6 @@ class ExpenseController extends Controller
 
             ->get();
         $allCategory=$categories->contains($existingCategory)? $categories:  $categories->push($existingCategory);
-//        dd($allCategory);
         return view('expenses.edit',compact('expense','allCategory'));
     }
 
@@ -162,12 +151,10 @@ class ExpenseController extends Controller
      */
     public function update(ExpenseRequest $request, Expense $expense)
     {
-        $user = auth()->user();
-
         try {
             DB::beginTransaction();
 
-           $expenses= $expense ->update([
+            $expense ->update([
                 'amount'=>$request->amount,
                 'description'=> $request->description,
                 'date'=> $request->date,
@@ -206,6 +193,6 @@ class ExpenseController extends Controller
 
 
     }
-//
+
 
 }

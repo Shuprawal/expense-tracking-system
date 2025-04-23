@@ -3,8 +3,7 @@
         <h1 class="fw-bold">
             Forecast Expenses for {{ \Carbon\Carbon::create()->month((int)$selectedMonth)->format('F') }}
         </h1>
-
-
+        @php  $nextMonth = $selectedMonth != \Carbon\Carbon::now()->addMonth(1)->month  @endphp
 
 
         @if( $incomeSource=='forecastIncome')
@@ -15,7 +14,6 @@
         @else
             <h4>Total Income: {{ number_format($totalIncome, 2) }}</h4>
         @endif
-
 
 
         <x-month-select :route="'forecasts.report'" :parameters="[]" />
@@ -47,35 +45,31 @@
                                         <form action="{{ route('category.forecast.edit', $expense['category_id']) }}" method="get" class="ms-2">
                                             <input type="hidden" name="date" value="{{ $selectedMonth }}">
                                             <input type="hidden" name="category_id" value="{{ $expense['category_id'] }}">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary p-1">
-                                                <i class="bi bi-pen-fill"></i>
-                                            </button>
+{{--                                            @dd($selectedMonth,\Carbon\Carbon::now()->month)--}}
+                                            @if($nextMonth)
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary p-1">
+                                                    <i class="bi bi-pen-fill"></i>
+                                                </button>
+                                            @endif
+
                                         </form>
                                     </div>
                                 </td>
-
-
                                 <td>{{ number_format($expense['amount'], 2) }}</td>
                                 <td>{{ $expense['spendPercentage'] }}%</td>
                                 <td>{{ number_format($expense['spend'], 2) }}</td>
                                 <td>{{ number_format($expense['remaining'], 2) }}</td>
-
                                 <td>
-{{--                                    <form action="{{ route('forecasts.detach') }}" method="POST">--}}
-{{--                                        @csrf--}}
-{{--                                        @method('DELETE')--}}
-{{--                                        <input type="hidden" name="category_id" value="{{ $expense['category_id'] }}">--}}
-{{--                                        <input type="hidden" name="date" value="{{ $selectedMonth }}">--}}
-{{--                                        <button type="submit" class="btn btn-outline-danger">--}}
-{{--                                            <i class="bi bi-trash"></i>--}}
-{{--                                        </button>--}}
-{{--                                    </form>--}}
+                                    @if($nextMonth)
+
                                     <x-delete-button
                                         :route="'forecasts.detach'"
                                         :parameters="['category_id' => $expense['category_id'], 'date' => $selectedMonth]"
                                         :title="'Delete Category'"
                                         :message="'Are you sure you want to delete this Category? This cannot be undone.'"
                                     />
+                                    @endif
+
                                 </td>
                             </tr>
                         @endforeach

@@ -46,7 +46,6 @@ class ForecastincomeController extends Controller
     public function index(DateDurationRequest $request)
     {
         $search = $request->get('inputText');
-//        dd($search);
         $start=$request->input('start',Carbon::now()->startOfMonth()->toDateString());
         $end=$request->input('end',Carbon::now()->endOfMonth()->toDateString());
 
@@ -97,12 +96,10 @@ class ForecastincomeController extends Controller
             $amount = $request->input('amount');
         }
 
-        $amount = $request->input('amount');
         try {
             DB::beginTransaction();
              $user-> forecastexpenses()-> create([
                     'amount'=>$amount,
-
                 ]);
 
             DB::commit();
@@ -145,26 +142,13 @@ class ForecastincomeController extends Controller
 
     public function report(Request $request)
     {
-
         $expenses = [];
         $request->validate([
             'month' => 'integer|between:1,12',
         ]);
-
         $selectedMonth = $request->input('month', now()->month);
-
-//        $selectedYear = $request->input('year', now()->year);
-
-//        $selectedDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
         $user = auth()->user();
-//        $start= $selectedDate->copy()->startOfMonth()->toDateString();
-//        $end=$selectedDate->copy()->endOfMonth()->toDateString();
-//        $startNext= $selectedDate->copy()->startOfMonth()->addMonth(1)->toDateString();
-//        $endNext=$selectedDate->copy()->endOfMonth()->addMonth(1)->toDateString();
-
         $nextMonthSelected = $selectedMonth == Carbon::now()->addMonth()->month;
-//        $upComingMonths =$selectedMonth > Carbon::now()->month;
-
         $isMonth= $nextMonthSelected ? Carbon::now()->month : $selectedMonth;
 
         $income = Income::where('user_id', $user->id)
@@ -173,14 +157,12 @@ class ForecastincomeController extends Controller
 
         if (!$income) {
             $forecastIncome=Forecastincome::where('user_id',$user->id)
-//                ->whereMonth('date', $isMonth)
                 ->sum('amount');
 
             if (!$forecastIncome){
                 return redirect()->route('forecasts.create');
             }else{
                 $incomeSource='forecastIncome';
-//                $expense['totalIncome']='aaa';
                 $totalIncome = $forecastIncome;
             }
 
@@ -188,12 +170,6 @@ class ForecastincomeController extends Controller
             $incomeSource='income';
             $totalIncome = $income;
         }
-
-//        if (!$income && $selectedDate < Carbon::now()) {
-//            return redirect()->route('incomes.create');
-//        } else {
-//            $totalIncome = $income;
-//        }
 
         $categories = $user->categories()
             ->whereHas('users', function ($query) use ($isMonth) {
@@ -222,17 +198,8 @@ class ForecastincomeController extends Controller
                 ->whereMonth('date', $isMonth)
                 ->get();
             if ($selectedMonth == Carbon::now()->addMonth(1)->month) {
-
-
-
-
-
-
-//                dd($spended->amount);
                 $totalExpense = $spended->sum('amount');
-//                dd($totalIncome);
                 $spendPercentage = round(($totalExpense / $totalIncome) * 100, 2);
-//                dd($percentage,$spendPercentage);
                 $sumPercentage = round($percentage + $spendPercentage);
                 $forecastPercentage = round($sumPercentage / 2, 2);
                 $amount = ($forecastPercentage / 100) * $totalIncome;
@@ -244,20 +211,9 @@ class ForecastincomeController extends Controller
                     'spendPercentage' => 0,
                     'remaining' => 0,
                     'category_id' => $category->id,
-
                 ];
-
             } else {
-
-//                $spended = Expense::where('user_id', $user->id)
-//                    ->where('category_id', $category->id)
-//                    ->whereMonth('date', $isMonth)
-//                    ->get();
-
-//                dd($spended);
                 $totalExpense = $spended->sum('amount');
-//                dd($totalExpense);
-//                dd($totalExpense);
                 $remaining = $amount - $totalExpense;
                 $spendPercentage = round($totalExpense / $totalIncome * 100, 2);
 

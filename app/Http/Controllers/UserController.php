@@ -58,22 +58,7 @@ class UserController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
     public function show(User $user)
     {
         $user->with('categories')->withWhereHas('expenses', function ($query) {
@@ -83,31 +68,21 @@ class UserController extends Controller
         return view('admin.show', compact('user') );
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(User $user)
-    {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, User $user)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(User $user)
     {
-        $user->roles()->detach();
-        $user->categories()->detach();
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'User has been deleted');
+        try {
+            DB::beginTransaction();
+            $user->roles()->detach();
+            $user->categories()->detach();
+            $user->delete();
+            DB::commit();
+            return redirect()->route('users.index')->with('success', 'User has been deleted');
+        }catch (\Exception $exception){
+            DB::rollBack();
+            return redirect()->route('users.index')->with('error','cannot delete the user id it has any permission' );
+        }
+
     }
 //    public function permission()
 //    {

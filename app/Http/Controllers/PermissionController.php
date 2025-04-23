@@ -36,15 +36,11 @@ class PermissionController extends Controller
         DB::beginTransaction();
         try {
 
-
-//            dd($request->all());
             $allRoles = Role::all();
             foreach ($allRoles as $role) {
                 $permissionId = $request->permissions[$role->id]??[];
                 $role->permissions()->sync($permissionId);
             }
-
-
             DB::commit();
             return redirect()->back()->with('success', 'Permissions updated successfully!');
         } catch (\Exception $e) {

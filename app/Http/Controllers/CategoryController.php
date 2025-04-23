@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use mysql_xdevapi\Exception;
 
 class CategoryController extends Controller
 {
@@ -27,7 +28,6 @@ class CategoryController extends Controller
         $search=$request->input('inputText');
         $categories = Category::with('users')
             ->where('name','LIKE',"%{$search}%")
-//            ->where('disabled','no')
             ->withCount('users')
             ->orderBy('created_at','DESC')
             ->paginate(10);
@@ -41,7 +41,6 @@ class CategoryController extends Controller
             ->whereHas('users', function ($query) use ($user) {
                 $query->where('user_id',$user->id);
             })
-
             ->paginate(12);
         return view('categories.display', compact('categories'));
     }
@@ -370,15 +369,14 @@ class CategoryController extends Controller
     {
         $user = Auth::user();
 
-        $check = Category::whereHas('users', function ($query) {
-            $query->where('user_id', Auth::id());
-        })->count();
+        $year = Carbon::now()->year;
+        $month = Carbon::now()->month;
+        $hasCategory = Category::whereHas('users', function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->exists();;
 
-//        dd($check);
-//        dd($check->pluck('name')->toArray());
 
-//        dd(Carbon::now()->month,Carbon::now()->year);
-        if ($check == 0) {
+        if (!$hasCategory) {
             $categories = Category::withSum('expenses', 'amount')
                 ->orderBy('expenses_sum_amount', 'desc')
                 ->where('disabled','no')
@@ -387,31 +385,31 @@ class CategoryController extends Controller
         }else{
             $categories = Category::withSum('expenses', 'amount')
                 ->orderBy('expenses_sum_amount', 'desc')
-                ->whereDoesntHave('users', function ($query) {
-                $query->whereYear('category_user.date', carbon::now()->year)
-                    ->whereMonth('category_user.date', carbon::now()->month)
-                    ->where('category_user.user_id', Auth::id());
+                ->whereDoesntHave('users', function ($query) use ($user,$month,$year) {
+                $query->whereYear('category_user.date', $year)
+                    ->whereMonth('category_user.date', $month)
+                    ->where('category_user.user_id', $user->id);
             })->where('disabled','no')->limit(6)->get();
         }
         $existingPercentage = $user->categories()
-            ->whereYear('category_user.date', carbon::now()->year)
-            ->whereMonth('category_user.date', carbon::now()->month)
-            ->where('category_user.user_id', Auth::id())
-//            ->get();
+            ->whereYear('category_user.date', $year)
+            ->whereMonth('category_user.date', $month)
+            ->where('category_user.user_id', $user->id)
+
             ->sum('category_user.percentage');
 
-//        ->get();
-//        dd($existingPercentage);
-//        dd($exisitingPercentage->pluck('percentage')->toArray());
 
         return view('categories.new-category', compact('categories','existingPercentage'));
     }
+
 
     public function disable(Request $request, Category $category)
     {
         $disable=$request->input('disable');
         if ($disable == 'Yes') {
             $category->update(['disabled' => 'yes']);
+            $category->users()->detach();
+//            $category->delete();
             return redirect()->back()->with('success', 'Category disabled successfully.');
         }else{
             $category->update(['disabled' => 'no']);
@@ -424,7 +422,6 @@ class CategoryController extends Controller
     {
 
         $categories = Category::with('users')
-
             ->whereHas('users', function ($query) {
                     $query->where('category_user.date',session('categoryDate'))
                     ->where('users.id', auth()->id());
@@ -453,23 +450,39 @@ class CategoryController extends Controller
     public function forecastDetach(Request $request)
     {
 
+//        if ($request->date<1 || $request->date>12) {
+//            return redirect()->back()->with('error', 'Invalid month.');
+//        }
+        $request->validate([
+            'date' => 'integer|between:1,12',
+        ]);
+
         $user = Auth::user();
 
-        $month = Carbon::createFromFormat('m', $request->date);
+        $month=Carbon::createFromDate(now()->year, $request->date,1);
+        $start = $month->copy()->startOfMonth();
+        $end = $month->copy()->endOfMonth();
+
+        $validDate=$user->categories()->wherePivot('date','>=', $start)->wherePivot('date','<=', $end)->wherePivot('category_id',$category->id)->first();
+        abort_if(!$validDate, 404);
 
 
-        $start = $month->startOfMonth();
-        $end = $month->endOfMonth();
         if (!empty($request->category_id)) {
+            try {
+                $user->categories()
+                    ->wherePivot('category_id', $request->category_id)
+                    ->wherePivot('date','>=', $start)
+                    ->wherePivot('date','<=', $end)
+                    ->detach();
 
-            $user->categories()
-                ->wherePivot('category_id', $request->category_id)
-                ->wherePiviot('date','>=', $start)
-                ->wherePivot('date','<=', $end)
-                ->detach();
 
-            return redirect()->back()->with('success', 'User category deleted successfully.');
+                return redirect()->back()->with('success', 'User category deleted successfully.');
+            }catch (\Exception $exception){
+                return redirect()->back()->with('error', 'Invalid month.');
+            }
+
         }
+
 
 
         return redirect()->back()->with('error', 'Category ID is required.');
@@ -480,34 +493,25 @@ class CategoryController extends Controller
     {
 
         $user = Auth::user();
-
-        if ($request->date<1 || $request->date>12) {
-            return redirect()->back()->with('error', 'Invalid month.');
-        }
+        $request->validate([
+            'date' => 'integer|between:1,12',
+        ]);
         $category=$user->categories()->where('category_id',$request->category_id)->first();
-
         abort_if(!$category, 403);
 
-
         $month=$request->date;
-        $year = Carbon::now()->year;
 
-        $date= Carbon::createFromDate($year, $month,1);
-
-        $start = Carbon::create($date)->startOfMonth();
-        $end = Carbon::create($date)->endOfMonth();
-        $invalidDate=$user->categories()->wherePivot('date','>=', $start)->wherePivot('date','<=', $end)->first();
-        abort_if(!$invalidDate, 404);
+        $date= Carbon::createFromDate(now()->year, $month,1);
+        $start = $date->copy()->startOfMonth();
+        $end = $date->copy()->endOfMonth();
+        $invalidDate=$user->categories()->wherePivot('date','>=', $start)->wherePivot('date','<=', $end)->where('category_id',$category->id)->first();
+        abort_if(!$invalidDate , 404);
 
         $categories =  Category::findOrFail($request->category_id)->users()
             ->where('id',Auth::id())
             ->wherePivot('date','>=', $start)->
             wherePivot('date','<=', $end)
             ->first();
-
-
-//        $percentage = $categories->pivot->percentage;
-
 
         return view('categories.forecastEdit', compact('categories','start','end'));
 
